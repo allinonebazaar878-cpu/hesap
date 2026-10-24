@@ -1,0 +1,2034 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hesap EX</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<meta name="theme-color" content="#e8e9ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101318" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Serif:ital,wght@1,400;1,500&family=Archivo:wght@500;600;700;800&display=swap">
+<style>
+/* One physical calculator laid out like the fx-991EX (ClassWiz) keyboard. Stage 1: the Calculate app. */
+:root {
+  --ground: #e8e9ee; --ink: #1d2129; --muted: #5d6370; --chipbg: #ffffff; --chipline: #cdd1da;
+  /* the calculator itself keeps one look in both themes */
+  --face: #2c2c2f; --rim: #dfe0e4; --rim-edge: #b9bac0;
+  --rd: #e2477e; --yl: #d6bf6e; --bl: #6aa4dc; --pu: #a68ce8; --wl: #ecece8;
+  --lcd: #cdd8cb; --lcd-ink: rgba(22, 27, 21, var(--k, .82)); --lcd-ghost: rgba(22, 27, 21, .09);
+  --f-ui: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --f-lcd: "Noto Sans", "Segoe UI", system-ui, sans-serif;
+  --f-var: "Noto Serif", Georgia, "Times New Roman", serif;
+  --tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='31' viewBox='0 0 18 31'%3E%3Cpath d='M9 0l9 5.2v10.4L9 20.8 0 15.6V5.2zM9 20.8V31' fill='none' stroke='%23ffffff' stroke-opacity='.045' stroke-width='1'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ground: #101318; --ink: #e3e6ec; --muted: #9aa1ae; --chipbg: #1b2029; --chipline: #2e3542; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --ground: #101318; --ink: #e3e6ec; --muted: #9aa1ae; --chipbg: #1b2029; --chipline: #2e3542; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-ui); font-size: 14px; }
+.wrap { max-width: 420px; margin: 0 auto; padding: 18px 16px 40px; }
+
+/* switch to the other calculator */
+/* scaled down by fit() so the whole calculator fits the screen height */
+.stage { transform-origin: top center; }
+.vhprobe { position: fixed; top: 0; left: 0; width: 0; height: 100vh; height: 100svh; visibility: hidden; pointer-events: none; }
+.switchbar { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.swbtn { display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px/1 var(--f-ui); color: var(--ink); text-decoration: none; background: var(--chipbg); border: 1px solid var(--chipline); border-radius: 999px; padding: 8px 13px; }
+.swbtn:hover { border-color: var(--muted); }
+.swbtn:focus-visible { outline: 2px solid var(--bl); outline-offset: 2px; }
+.swbtn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- body ---------- */
+.ex { width: 100%; background-color: var(--face); background-image: var(--tex); border: 7px solid var(--rim); border-radius: 30px 30px 50px 50px; padding: 16px 12px 22px; box-shadow: 0 0 0 1px var(--rim-edge), 0 24px 48px -24px rgba(0, 0, 0, .65); }
+/* fast tapping: no double-tap zoom anywhere on the calculator (also between keys), no long-press menu or text selection */
+.ex { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.brand { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 12px; }
+.bl { display: flex; flex-direction: column; gap: 2px; color: #f3f3f3; }
+.bl b { font: 800 20px/1 var(--f-ui); letter-spacing: .05em; }
+.bl .model { font: 600 10.5px/1.2 var(--f-ui); letter-spacing: .08em; color: #d9d9d9; }
+.bl .series { font: 700 9.5px/1.3 var(--f-ui); letter-spacing: .42em; color: var(--rd); }
+.solar { width: 108px; height: 40px; border-radius: 6px; background: #1c1414; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 3px; box-shadow: 0 0 0 2px #19191b, inset 0 1px 3px rgba(0, 0, 0, .7); }
+.solar i { background: linear-gradient(160deg, #4b3631, #2a1d1a 60%, #3a2924); border-radius: 2px; }
+
+/* ---------- display ---------- */
+.bezel { background: #19191b; border-radius: 12px 12px 26px 26px; padding: 10px 12px 18px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+.lcd { background: var(--lcd); color: var(--lcd-ink); border-radius: 4px; padding: 3px 8px 6px; font-family: var(--f-lcd); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .3); user-select: none; -webkit-user-select: none; }
+.lcd.off .sb, .lcd.off .mx > * { visibility: hidden; }
+.sb { display: flex; align-items: center; gap: 4px; height: 14px; font: 700 9px/1 var(--f-lcd); overflow: hidden; white-space: nowrap; }
+.sb > span { color: var(--lcd-ghost); display: inline-flex; align-items: center; }
+.sb > span.on { color: var(--lcd-ink); }
+.sb .bx { padding: 1px 2px; border-radius: 1px; background: currentColor; }
+.sb .bx b { color: var(--lcd); }
+.sb .gap { flex: 1; }
+.sb svg { width: 15px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.mx { position: relative; height: 122px; display: flex; flex-direction: column; overflow: hidden; }
+
+/* calculation screen */
+.in { flex: 1; min-height: 0; font-size: 17px; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; display: flex; align-items: flex-start; padding-top: 6px; cursor: text; }
+.in::-webkit-scrollbar, .out::-webkit-scrollbar { display: none; }
+.in > .line { display: inline-block; padding-right: 10px; }
+.out { text-align: right; font-size: 23px; font-weight: 500; line-height: 1.15; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; min-height: 32px; padding-bottom: 2px; font-variant-numeric: tabular-nums; }
+.out sup { font-size: .55em; vertical-align: .85em; }
+.out .x10 { font-size: .78em; }
+.out .sm { font-size: 18px; }
+.tag { margin-left: 4px; }
+.cur { display: inline-block; width: 1.6px; height: 1.05em; background: var(--lcd-ink); vertical-align: middle; margin: 0 -.8px; animation: blink 1s steps(1) infinite; }
+.cur.ovr { width: .55em; height: 2px; vertical-align: -.15em; margin: 0; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cur { animation: none; } }
+.v { font-family: var(--f-var); font-style: italic; }
+.mk { font-size: .82em; }
+.sub { font-size: .66em; vertical-align: -.35em; }
+.err { display: flex; flex-direction: column; justify-content: center; height: 100%; font-size: 15px; line-height: 1.55; padding-left: 4px; }
+.err b { font-size: 19px; font-weight: 600; margin-bottom: 6px; }
+
+.inwrap { position: relative; flex: 1; min-height: 0; display: flex; }
+.inwrap .in { flex: 1; min-width: 0; }
+.more { position: absolute; top: 9px; font: normal 9px/1 var(--f-lcd); background: var(--lcd); padding: 1px; }
+.more.l { left: 0; }
+.more.r { right: 0; }
+.mx.line .inwrap { flex: none; }
+.mx.line .in, .mx.line .out, .mx.line .ll, .mx.line .lr { font-size: 16px; height: 29px; line-height: 29px; min-height: 0; padding: 0; font-weight: 400; }
+.mx.line .in { align-items: center; }
+.mx.line .ll, .mx.line .lr { white-space: nowrap; overflow: hidden; }
+.mx.line .lr, .mx.line .out { text-align: right; }
+.mx.line .more { top: 10px; }
+.mx.line.small .in, .mx.line.small .out, .mx.line.small .ll, .mx.line.small .lr { font-size: 13px; height: 19.5px; line-height: 19.5px; }
+.mx.line.small .more { top: 5px; }
+
+/* natural-display templates */
+.box { display: inline-block; width: .62em; height: .86em; border: 1.2px dashed var(--lcd-ink); vertical-align: middle; margin: 0 1px; opacity: .6; position: relative; }
+.box.act { opacity: 1; border-style: solid; }
+.box.act .cur { position: absolute; left: 1px; top: 50%; transform: translateY(-50%); height: 80%; margin: 0; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; font-size: .86em; line-height: 1.12; }
+.frac > .n { border-bottom: 1.4px solid var(--lcd-ink); padding: 0 3px 1px; }
+.frac > .d { padding: 1px 3px 0; }
+.pw { font-size: .68em; vertical-align: .75em; margin-left: 1px; }
+.rt { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.rt .rs { font-size: 1.05em; line-height: 1; padding-top: 1px; }
+.rt .rb { border-top: 1.4px solid var(--lcd-ink); padding: 2px 2px 0; margin-left: -1px; }
+.ri { font-size: .6em; vertical-align: .95em; margin-right: -4px; }
+.sb2 { font-size: .66em; vertical-align: -.4em; }
+.big { display: inline-flex; align-items: center; vertical-align: middle; }
+.big .sym { font-size: 1.5em; line-height: 1; font-weight: 400; }
+.lims { display: inline-flex; flex-direction: column; justify-content: space-between; font-size: .62em; line-height: 1.1; margin-right: 2px; align-self: stretch; }
+.sig { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1; margin-right: 1px; }
+.sig .lo, .sig .hi { font-size: .6em; }
+.sig .sym { font-size: 1.25em; }
+.ddx { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: .7em; line-height: 1.05; margin-right: 1px; }
+.ddx > span:first-child { border-bottom: 1.2px solid var(--lcd-ink); padding: 0 1px; }
+.at { font-size: .66em; vertical-align: -.5em; }
+.lt { font-size: .8em; }
+
+/* menus and other screens */
+.list { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; padding: 4px 14px 0 2px; font-size: 15px; }
+.li { all: unset; display: flex; align-items: center; justify-content: space-between; height: 27px; padding: 0 4px; border-radius: 2px; cursor: pointer; white-space: nowrap; touch-action: manipulation; }
+.li.hi { background: var(--lcd-ink); color: var(--lcd); }
+.li:focus-visible { outline: 1px dotted var(--lcd-ink); }
+.dia { font-style: normal; font-size: 10px; margin-left: 8px; }
+.bar { position: absolute; right: 2px; top: 6px; bottom: 6px; width: 4px; border: 1px solid var(--lcd-ink); border-radius: 2px; }
+.bar i { position: absolute; left: 0; right: 0; background: var(--lcd-ink); }
+.back { position: absolute; left: 2px; top: 2px; font-size: 9px; }
+.prompt { flex: 1; display: flex; flex-direction: column; justify-content: center; font-size: 16px; line-height: 1.6; padding-left: 4px; }
+.prompt small { font-size: 13px; }
+.apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 6px; padding: 5px 4px 0; }
+.app { all: unset; position: relative; height: 40px; display: flex; align-items: center; justify-content: center; border: 1.4px solid var(--lcd-ink); border-radius: 4px; cursor: pointer; touch-action: manipulation; }
+.app svg { width: 34px; height: 24px; }
+.app svg * { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.app svg text { fill: currentColor; stroke: none; font: 600 9px var(--f-lcd); }
+.app.hi { background: var(--lcd-ink); color: var(--lcd); }
+.app .badge { position: absolute; right: -1px; bottom: -1px; font: 700 8px/1 var(--f-lcd); background: var(--lcd); color: var(--lcd-ink); border: 1px solid var(--lcd-ink); padding: 1px 2px; border-radius: 2px; }
+.appname { margin-top: auto; font-size: 14px; padding: 0 4px 2px; }
+.rows { flex: 1; display: flex; flex-direction: column; padding: 2px 4px 0; font-size: 16px; }
+.row { display: flex; justify-content: space-between; align-items: center; height: 25px; padding: 0 4px; white-space: nowrap; overflow: hidden; }
+.row.hi { background: var(--lcd-ink); color: var(--lcd); }
+.row.hi .cur { background: var(--lcd); }
+.row .val { overflow: hidden; text-overflow: clip; }
+.foot { font-size: 13px; padding: 0 4px; margin-top: auto; }
+.eqline { font-size: 14px; padding: 2px 4px 2px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid var(--lcd-ink); margin-bottom: 2px; }
+.rcl { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 13.5px; padding: 4px 4px 0; }
+.rcl span { white-space: nowrap; overflow: hidden; }
+.contrast { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
+.cbar { display: flex; gap: 3px; }
+.cbar i { width: 12px; height: 12px; border: 1px solid var(--lcd-ink); }
+.cbar i.on { background: var(--lcd-ink); }
+/* history page: newest first, scrolls when long; the highlighted entry is inverted like menu items */
+.hpage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.hhd { flex: none; display: flex; justify-content: space-between; align-items: center; height: 21px; padding: 0 2px 2px 4px; font-size: 13px; border-bottom: 1px solid var(--lcd-ink); }
+.hclr { all: unset; font-size: 11.5px; line-height: 15px; padding: 0 7px; border: 1.2px solid var(--lcd-ink); border-radius: 3px; cursor: pointer; touch-action: manipulation; }
+.hclr:focus-visible { outline: 1px dotted var(--lcd-ink); outline-offset: 1px; }
+.hsc { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--lcd-ink) transparent; }
+.hent { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 25px; padding: 1px 4px; cursor: pointer; touch-action: manipulation; }
+.hent + .hent { border-top: 1px dotted var(--lcd-ink); }
+.hent.hi { background: var(--lcd-ink); color: var(--lcd); }
+.hent.hi > * { --lcd-ink: var(--lcd); }
+.hent:focus-visible { outline: 1px dotted var(--lcd-ink); outline-offset: -2px; }
+.hx, .hr { white-space: nowrap; overflow: hidden; }
+.hx { flex: 1; min-width: 0; font-size: 14px; line-height: 1.45; text-overflow: ellipsis; }
+.hr { flex: none; max-width: 62%; font-size: 15px; line-height: 1.3; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.hr sup { font-size: .55em; vertical-align: .85em; }
+.hr .x10 { font-size: .78em; }
+.hr .sm { font-size: 13px; }
+.hnone { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+
+/* ---------- keys ---------- */
+.top { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: auto auto; column-gap: 7px; row-gap: 3px; margin-top: 14px; }
+.fn { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px 7px; margin-top: 4px; }
+.num { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px 9px; margin-top: 12px; }
+.cell { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.lab { height: 15px; display: flex; justify-content: center; align-items: flex-end; gap: 6px; padding: 0 0 2px; font: 600 10px/12px var(--f-ui); letter-spacing: .01em; white-space: nowrap; }
+.lab.c { justify-content: center; }
+.lab .s { color: var(--yl); }
+.lab .a { color: var(--rd); }
+.lab .b { color: var(--bl); }
+.lab .p { color: var(--pu); }
+.lab .w { color: var(--wl); }
+.lab sup, .lab sub { font-size: .75em; line-height: 0; }
+.lab .v { font-size: 1.08em; }
+.lab .cap-box { width: 5px; height: 6px; border-width: 1px; margin-left: 0; vertical-align: 0; }
+.k { font-family: var(--f-ui); border: 0; cursor: pointer; padding: 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 1px; white-space: nowrap; touch-action: manipulation; transition: transform .05s, box-shadow .05s, filter .1s; -webkit-tap-highlight-color: transparent; }
+.k:focus-visible { outline: 2px solid var(--bl); outline-offset: 2px; }
+.k.f { height: 31px; border-radius: 8px 8px 11px 11px; background: linear-gradient(#45454b, #2b2b2f 70%); color: #f4f4f4; font-size: 13px; font-weight: 500; box-shadow: 0 2px 0 #111113, inset 0 1px 0 rgba(255, 255, 255, .09); }
+.k.n { height: 42px; border-radius: 9px 9px 12px 12px; background: linear-gradient(#f4f4f6, #d5d4da 75%); color: #2a2a2f; font-size: 21px; font-weight: 500; box-shadow: 0 3px 0 #8b8a92, inset 0 1px 0 #fff; }
+.k.n.t { font-size: 15px; }
+.k.b { height: 42px; border-radius: 9px 9px 12px 12px; background: linear-gradient(#3557b0, #213f8b 75%); color: #f4f6fb; font-size: 17px; font-weight: 600; box-shadow: 0 3px 0 #13265a, inset 0 1px 0 rgba(255, 255, 255, .18); }
+.k.r { width: 48px; height: 30px; border-radius: 15px; margin: 4px auto 0; background: linear-gradient(#f4f4f6, #c4c4ca); box-shadow: 0 3px 0 #0f0f10, inset 0 1px 0 #fff; font: 700 12px/1 var(--f-ui); }
+#kShift { background: linear-gradient(#e4cf80, #c9b05a); color: #3a3010; box-shadow: 0 3px 0 #0f0f10, inset 0 1px 0 rgba(255, 255, 255, .45); }
+#kAlpha { background: linear-gradient(#ec6c97, #cf3a6c); color: #4a0f24; box-shadow: 0 3px 0 #0f0f10, inset 0 1px 0 rgba(255, 255, 255, .35); }
+.k.zero { border-bottom-left-radius: 22px; }
+.k.eq { border-bottom-right-radius: 22px; }
+.k:active, .k.press { transform: translateY(2px); filter: brightness(.94); }
+.k.f:active, .k.f.press { box-shadow: 0 0 0 #111113; }
+.k.n:active, .k.n.press { box-shadow: 0 1px 0 #8b8a92; }
+.k.b:active, .k.b.press { box-shadow: 0 1px 0 #13265a; }
+.k.armed, #kShift.armed, #kAlpha.armed { box-shadow: 0 0 0 2px #ffffff, 0 3px 0 #0f0f10; transform: translateY(1px); }
+.k sup { font-size: .68em; align-self: flex-start; margin-top: 5px; }
+.k .v { font-size: 1.1em; }
+.cap-frac { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.cap-frac i { display: block; width: 8px; height: 7px; border: 1.3px solid currentColor; }
+.cap-frac i:first-child { margin-bottom: 1px; }
+.cap-frac b { display: block; width: 13px; height: 1.4px; background: currentColor; }
+.cap-box { display: inline-block; width: 7px; height: 8px; border: 1.2px solid currentColor; vertical-align: middle; margin-left: 1px; }
+.cap-box.f { background: currentColor; }
+.cap-box.s { width: 5px; height: 6px; }
+
+/* cursor pad */
+.dpad { grid-column: 3 / span 2; grid-row: 1 / span 2; position: relative; width: 100%; max-width: 112px; height: 78px; margin: 6px auto 0; border-radius: 18px; overflow: hidden; background: linear-gradient(#f4f4f6, #c2c2c8); box-shadow: 0 3px 0 #0f0f10, inset 0 1px 0 #fff; }
+.dpad button { position: absolute; inset: 0; border: 0; padding: 0; cursor: pointer; background: transparent; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.dpad button:active, .dpad button.press { background: rgba(0, 0, 0, .13); }
+.dpad button:focus-visible { outline: none; background: rgba(106, 164, 220, .3); }
+.dpad .up { clip-path: polygon(0 0, 100% 0, 50% 50%); }
+.dpad .dn { clip-path: polygon(0 100%, 100% 100%, 50% 50%); }
+.dpad .lf { clip-path: polygon(0 0, 0 100%, 50% 50%); }
+.dpad .rg { clip-path: polygon(100% 0, 100% 100%, 50% 50%); }
+.dpad button span { position: absolute; font-size: 10px; color: #45454b; transform: translate(-50%, -50%); }
+.dpad .up span { left: 50%; top: 17%; } .dpad .dn span { left: 50%; top: 83%; } .dpad .lf span { left: 14%; top: 50%; } .dpad .rg span { left: 86%; top: 50%; }
+.dpad .hub { position: absolute; left: 50%; top: 50%; width: 26px; height: 22px; transform: translate(-50%, -50%); background: #bcbcc2; border-radius: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); pointer-events: none; }
+
+.note { margin: 14px 4px 0; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: center; }
+
+/* History button above the calculator; pressed while the history page is on the screen */
+button.swbtn { cursor: pointer; }
+.swbtn[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+
+@media (max-width: 500px) {
+  .wrap { padding-top: 8px; padding-bottom: 0; }
+  .note { display: none; }
+  .switchbar { margin-bottom: 6px; }
+  .swbtn { padding: 7px 11px; }
+}
+@media (max-width: 380px) {
+  .wrap { padding-inline: 10px; }
+  .ex { padding-inline: 9px; border-width: 6px; }
+  .top, .fn { column-gap: 5px; }
+  .num { column-gap: 7px; }
+  .lab { font-size: 9.5px; gap: 5px; }
+  .k.f { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="fit" id="fit"><div class="stage" id="stage">
+  <div class="switchbar">
+    <button type="button" class="swbtn" id="histBtn" aria-pressed="false" title="Show the history on the calculator screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg>History</button>
+    <a class="swbtn" href="Hesap%20Scientific.html" title="Open the other calculator layout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Switch to SC-10 layout</a>
+  </div>
+  <section class="ex" aria-label="Scientific calculator, EX layout">
+    <div class="brand">
+      <div class="bl"><b>HESAP</b><span class="model">SC-EX 991</span><span class="series">SCIENTIFIC</span></div>
+      <div class="solar" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="bezel">
+      <div class="lcd" id="lcd" role="status" aria-live="polite">
+        <div class="sb" id="sb" aria-hidden="true"></div>
+        <div class="mx" id="mx"></div>
+      </div>
+    </div>
+    <div class="top" id="top"></div>
+    <div class="fn" id="fn"></div>
+    <div class="num" id="num"></div>
+  </section>
+  </div></div>
+  <p class="note">Works like the fx-991EX in its Calculate app. The other MENU apps come in a later stage.</p>
+</div>
+<div class="vhprobe" id="vhProbe" aria-hidden="true"></div>
+<script>
+(() => {
+  'use strict';
+  // =============== state ===============
+  const STORE = 'hesap-ex-v1';
+  const DEF = () => ({ io: 'MM', angle: 'DEG', disp: { t: 'norm', n: 1 }, eng: false, frac: 'dc', cplx: 'abi', stat: false, sAuto: true, sShow: 'f', eqn: true, table: 'fg', dec: 'dot', sep: false, font: 'n', qr: 11, contrast: 5 });
+  let setup = DEF();
+  const VARS0 = () => ({ A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, M: 0, x: 0, y: 0 });
+  const vars = VARS0();
+  const VARN = { A: 'va', B: 'vb', C: 'vc', D: 'vd', E: 've', F: 'vf', M: 'mem', x: 'vx', y: 'vy' };
+  const NAMEV = Object.fromEntries(Object.entries(VARN).map(([k, v]) => [v, k]));
+  let ans = 0, history = [];
+  let root = [], cur = { seq: root, pos: 0 };
+  let evaluated = false, err = null, errCur = null, view = { t: 'dec' }, lastShown = 0, extra = null, tag = '';
+  let shift = false, alpha = false, sto = false, insArg = false, ovr = false, off = false;
+  let screen = null, histIdx = -1, draft = null, multi = null, undoSnap = null;
+
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify({ setup, vars, ans, history: history.slice(0, 30) })); } catch (e) {} };
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (!s) return;
+      const d = DEF();
+      if (s.setup && typeof s.setup === 'object') {
+        for (const k of Object.keys(d)) if (typeof s.setup[k] === typeof d[k]) setup[k] = s.setup[k];
+        const dp = s.setup.disp;
+        const okDisp = dp && (((dp.t === 'fix' || dp.t === 'sci') && Number.isInteger(dp.n) && dp.n >= 0 && dp.n <= 9) || (dp.t === 'norm' && (dp.n === 1 || dp.n === 2)));
+        setup.disp = okDisp ? { t: dp.t, n: dp.n } : d.disp;
+        const pickOk = (k, list) => { if (!list.includes(setup[k])) setup[k] = d[k]; };
+        pickOk('frac', ['dc', 'abc']); pickOk('cplx', ['abi', 'pol']); pickOk('sShow', ['f', 'v']); pickOk('table', ['f', 'fg']); pickOk('dec', ['dot', 'comma']); pickOk('font', ['n', 's']); pickOk('qr', [3, 11]);
+        if (!['MM', 'MD', 'LL', 'LD'].includes(setup.io)) setup.io = 'MM';
+        if (!['DEG', 'RAD', 'GRA'].includes(setup.angle)) setup.angle = 'DEG';
+        setup.contrast = Math.min(9, Math.max(1, Math.round(setup.contrast) || 5));
+      }
+      if (s.vars) for (const k of Object.keys(vars)) if (Number.isFinite(s.vars[k])) vars[k] = s.vars[k];
+      if (Number.isFinite(s.ans)) ans = s.ans;
+      if (Array.isArray(s.history)) history = s.history.filter(h => h && validTree(h.root) && Number.isFinite(h.r)).map(h => ({ root: h.root, r: h.r, ...(validPair(h.extra) ? { extra: h.extra } : {}) })).slice(0, 30);
+    } catch (e) {}
+  }
+  const isLine = () => setup.io[0] === 'L';
+  const SLOTS = { frac: 2, mixed: 3, pow: 1, e10: 1, sqrt: 1, cbrt: 1, root: 2, logb: 2, abs: 1, integ: 3, deriv: 2, sigma: 3 };
+  // the only pre-built labels a token may carry (constants, conversions, x, y, e)
+  let safeH = null;
+  const isSafeH = h => { if (!safeH) safeH = new Set([...CONSTS.map(c => `<span class="v">${c.h}</span>`), ...CONVS.map(c => `<span class="mk">${c.t}</span>`), ...['x', 'y', 'e'].map(L => `<span class="v">${L}</span>`)]); return safeH.has(h); };
+  function validTree(seq, depth = 0) {
+    return Array.isArray(seq) && depth < 30 && seq.every(it => it && typeof it === 'object' && (it.k === 't'
+      ? typeof it.d === 'string' && typeof it.v === 'string' && (it.h === undefined || isSafeH(it.h))
+      : SLOTS[it.k] && Array.isArray(it.s) && it.s.length === SLOTS[it.k] && it.s.every(x => validTree(x, depth + 1))));
+  }
+  const validPair = e => !!e && e.t === 'pair' && Array.isArray(e.a) && Array.isArray(e.b) && Number.isFinite(e.a[1]) && Number.isFinite(e.b[1]) && ['r', 'x'].includes(e.a[0]) && ['θ', 'y'].includes(e.b[0]);
+
+  // =============== data: constants, conversions, engineering symbols ===============
+  // CODATA 2010 values (the fx-991EX uses CODATA 2010); order and categories as on the calculator
+  const CONST_CATS = [
+    ['Universal', [['h', 'h', 6.62606957e-34], ['ℏ', 'ℏ', 1.054571726e-34], ['c₀', 'c<span class="sub">0</span>', 299792458], ['ε₀', 'ε<span class="sub">0</span>', 8.854187817e-12], ['μ₀', 'μ<span class="sub">0</span>', 4 * Math.PI * 1e-7], ['Z₀', 'Z<span class="sub">0</span>', 376.730313461], ['G', 'G', 6.67384e-11], ['lP', 'l<span class="sub">P</span>', 1.616199e-35], ['tP', 't<span class="sub">P</span>', 5.39106e-44]]],
+    ['Electromagnetic', [['μN', 'μ<span class="sub">N</span>', 5.05078353e-27], ['μB', 'μ<span class="sub">B</span>', 9.27400968e-24], ['e', 'e', 1.602176565e-19], ['Φ₀', 'Φ<span class="sub">0</span>', 2.067833758e-15], ['G₀', 'G<span class="sub">0</span>', 7.7480917346e-5], ['KJ', 'K<span class="sub">J</span>', 4.8359787e14], ['RK', 'R<span class="sub">K</span>', 25812.8074434]]],
+    ['Atomic&Nuclear', [['mp', 'm<span class="sub">p</span>', 1.672621777e-27], ['mn', 'm<span class="sub">n</span>', 1.674927351e-27], ['me', 'm<span class="sub">e</span>', 9.10938291e-31], ['mμ', 'm<span class="sub">μ</span>', 1.883531475e-28], ['a₀', 'a<span class="sub">0</span>', 5.2917721092e-11], ['α', 'α', 7.2973525698e-3], ['re', 'r<span class="sub">e</span>', 2.8179403267e-15], ['λC', 'λ<span class="sub">C</span>', 2.4263102389e-12], ['γp', 'γ<span class="sub">p</span>', 2.675222005e8], ['λCp', 'λ<span class="sub">Cp</span>', 1.32140985623e-15], ['λCn', 'λ<span class="sub">Cn</span>', 1.3195909068e-15], ['R∞', 'R<span class="sub">∞</span>', 10973731.568539], ['μp', 'μ<span class="sub">p</span>', 1.410606743e-26], ['μe', 'μ<span class="sub">e</span>', -9.2847643e-24], ['μn', 'μ<span class="sub">n</span>', -9.6623647e-27], ['μμ', 'μ<span class="sub">μ</span>', -4.49044807e-26], ['mτ', 'm<span class="sub">τ</span>', 3.16747e-27]]],
+    ['Physico-Chem', [['u', 'u', 1.660538921e-27], ['F', 'F', 96485.3365], ['NA', 'N<span class="sub">A</span>', 6.02214129e23], ['k', 'k', 1.3806488e-23], ['Vm', 'V<span class="sub">m</span>', 2.2413968e-2], ['R', 'R', 8.3144621], ['c₁', 'c<span class="sub">1</span>', 3.74177153e-16], ['c₂', 'c<span class="sub">2</span>', 1.438777e-2], ['σ', 'σ', 5.670373e-8]]],
+    ['Adopted Values', [['g', 'g', 9.80665], ['atm', 'atm', 101325], ['RK-90', 'R<span class="sub">K-90</span>', 25812.807], ['KJ-90', 'K<span class="sub">J-90</span>', 4.835979e14]]],
+    ['Other', [['t', 't', 273.15]]],
+  ];
+  const CONSTS = CONST_CATS.flatMap(([, list]) => list.map(([t, h, v]) => ({ t, h, v })));
+  // metric conversions (factors from NIST SP 811); each is a command written after the value
+  const mul = f => x => x * f, dvd = f => x => x / f;
+  const CONV_CATS = [
+    ['Length', [['in▶cm', mul(2.54)], ['cm▶in', dvd(2.54)], ['ft▶m', mul(0.3048)], ['m▶ft', dvd(0.3048)], ['yd▶m', mul(0.9144)], ['m▶yd', dvd(0.9144)], ['mile▶km', mul(1.609344)], ['km▶mile', dvd(1.609344)], ['n mile▶m', mul(1852)], ['m▶n mile', dvd(1852)], ['pc▶km', mul(3.0856776e13)], ['km▶pc', dvd(3.0856776e13)]]],
+    ['Area', [['acre▶m²', mul(4046.8564224)], ['m²▶acre', dvd(4046.8564224)]]],
+    ['Volume', [['gal(US)▶L', mul(3.785411784)], ['L▶gal(US)', dvd(3.785411784)], ['gal(UK)▶L', mul(4.54609)], ['L▶gal(UK)', dvd(4.54609)]]],
+    ['Mass', [['oz▶g', mul(28.349523125)], ['g▶oz', dvd(28.349523125)], ['lb▶kg', mul(0.45359237)], ['kg▶lb', dvd(0.45359237)]]],
+    ['Velocity', [['km/h▶m/s', dvd(3.6)], ['m/s▶km/h', mul(3.6)]]],
+    ['Pressure', [['atm▶Pa', mul(101325)], ['Pa▶atm', dvd(101325)], ['mmHg▶Pa', mul(133.322387415)], ['Pa▶mmHg', dvd(133.322387415)], ['kgf/cm²▶Pa', mul(98066.5)], ['Pa▶kgf/cm²', dvd(98066.5)], ['lbf/in²▶kPa', mul(6.894757293)], ['kPa▶lbf/in²', dvd(6.894757293)]]],
+    ['Energy', [['kgf·m▶J', mul(9.80665)], ['J▶kgf·m', dvd(9.80665)], ['J▶cal', dvd(4.1855)], ['cal▶J', mul(4.1855)]]],
+    ['Power', [['hp▶kW', mul(0.745699872)], ['kW▶hp', dvd(0.745699872)]]],
+    ['Temperature', [['°F▶°C', x => (x - 32) * 5 / 9], ['°C▶°F', x => x * 9 / 5 + 32]]],
+  ];
+  const CONVS = CONV_CATS.flatMap(([, list]) => list.map(([t, f]) => ({ t, f })));
+  const ENGS = [['m', 1e-3], ['μ', 1e-6], ['n', 1e-9], ['p', 1e-12], ['f', 1e-15], ['k', 1e3], ['M', 1e6], ['G', 1e9], ['T', 1e12], ['P', 1e15], ['E', 1e18]];
+  const pad2 = n => String(n).padStart(2, '0');
+
+  // =============== math engine ===============
+  // The input is turned into a string, then compiled into small functions, so ∫, d/dx, Σ, CALC and SOLVE
+  // can run the same expression many times with different values of a variable.
+  const SE = () => { throw { kind: 'Syntax' }; };
+  const ME = () => { throw { kind: 'Math' }; };
+  const fin = v => { if (!Number.isFinite(v) || Math.abs(v) >= 1e100) ME(); return Math.abs(v) < 1e-99 ? 0 : v; };
+  const NAMES = ['asinh', 'acosh', 'atanh', 'sinh', 'cosh', 'tanh', 'asin', 'acos', 'atan', 'sin', 'cos', 'tan', 'sqrt', 'cbrt', 'root', 'logb', 'log', 'ln', 'abs', 'rnd', 'ranint', 'ran', 'pol', 'rec', 'ans', 'mem', 'pi', 'e',
+    'va', 'vb', 'vc', 'vd', 've', 'vf', 'vx', 'vy', 'integ', 'deriv', 'sigma',
+    ...CONSTS.map((c, i) => 'k' + pad2(i + 1)), ...CONVS.map((c, i) => 'cv' + pad2(i + 1)), ...ENGS.map((c, i) => 'eg' + pad2(i + 1))].sort((a, b) => b.length - a.length);
+  const TODEG = { DEG: 1, RAD: 180 / Math.PI, GRA: 0.9 };
+  const TRIG_MAX = { DEG: 9e9, RAD: 157079632.7, GRA: 1e10 };   // Casio input range for sin/cos/tan
+
+  function tokenize(s) {
+    const t = []; let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (c === ' ') { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        const m = s.slice(i).match(/^(\d+\.?\d*|\.\d*)/);
+        i += m[0].length;
+        if (s[i] === '.') throw { kind: 'Syntax', at: i };
+        t.push({ t: 'num', v: m[0] === '.' ? 0 : parseFloat(m[0]), at: i - m[0].length });
+      } else if (/[a-z]/.test(c)) {
+        const n = NAMES.find(n => s.startsWith(n, i));
+        if (!n) throw { kind: 'Syntax', at: i };
+        t.push({ t: 'id', v: n, at: i }); i += n.length;
+      } else if ('+-*/^()!~PCI,%°\'"δργJQEX'.includes(c)) { t.push({ t: 'op', v: c, at: i }); i++; }
+      else throw { kind: 'Syntax', at: i };
+    }
+    return t;
+  }
+
+  const isInt = x => Number.isFinite(x) && Math.abs(x - Math.round(x)) < 1e-9;
+  const cancel = (r, x, y) => (r !== 0 && Math.abs(r) <= 2e-15 * Math.max(Math.abs(x), Math.abs(y)) ? 0 : r);
+  function fact(n) { if (!isInt(n) || n < 0 || n > 69) ME(); n = Math.round(n); let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+  function nPr(n, r) { if (!isInt(n) || !isInt(r) || r < 0 || r > n || n >= 1e10) ME(); n = Math.round(n); r = Math.round(r); let v = 1; for (let i = 0; i < r; i++) { v *= (n - i); if (v >= 1e100) ME(); } return v; }
+  function nCr(n, r) { if (!isInt(n) || !isInt(r) || r < 0 || r > n || n >= 1e10) ME(); n = Math.round(n); r = Math.min(Math.round(r), n - Math.round(r)); let v = 1; for (let i = 1; i <= r; i++) { v = v * (n - r + i) / i; if (v >= 1e100) ME(); } return Math.round(v); }
+  function pow(b, e) {
+    if (b === 0 && e <= 0) ME();
+    if (b < 0 && isInt(e)) e = Math.round(e);
+    // a negative base needs an integer power or one of the form m/(odd), e.g. (−8)^(2/3) = 4
+    if (b < 0 && !isInt(e)) { const f = toFrac(e, 99999); if (!f || f.d % 2 === 0) ME(); return fin((Math.abs(f.n) % 2 ? -1 : 1) * Math.pow(-b, e)); }
+    return fin(Math.pow(b, e));
+  }
+  function xroot(n, x) { if (n === 0) ME(); return pow(x, 1 / n); }
+  function logb(b, x) { if (x <= 0 || b <= 0 || b === 1) ME(); return Math.log(x) / Math.log(b); }
+  const unrad = x => x * 180 / Math.PI / TODEG[setup.angle];
+  // sin and cos of an angle in degrees, folded into ±45° so exact angles give exact 0 / ±1 and tiny angles keep full precision
+  function sinCosDeg(d) {
+    const r = d % 360, q = Math.round(r / 90);
+    let e = r - 90 * q;
+    if (r) { const unit = Math.pow(10, Math.floor(Math.log10(Math.abs(r))) - 14); e = Math.round(e / unit) * unit; }
+    e = e * Math.PI / 180;
+    const s = Math.sin(e), c = Math.cos(e);
+    switch (((q % 4) + 4) % 4) {
+      case 0: return [s, c];
+      case 1: return [c, -s];
+      case 2: return [-s, -c];
+      default: return [-c, s];
+    }
+  }
+  function trig(f, x) {
+    const ang = setup.angle;
+    if (Math.abs(x) >= TRIG_MAX[ang]) ME();
+    let d = x * TODEG[ang];
+    if (ang === 'RAD') {
+      const k = Math.round(x / (Math.PI / 2));
+      if (k !== 0 && Math.abs(x - k * Math.PI / 2) <= 1e-15 * Math.abs(x)) d = 90 * k;   // a multiple of π/2
+      else return fin(Math[f](x));
+    }
+    const [s, c] = sinCosDeg(d);
+    if (f === 'sin') return s;
+    if (f === 'cos') return c;
+    if (c === 0) ME();
+    return s / c;
+  }
+  // round half away from zero to n decimals (or n significant digits), using the 15-digit decimal value so 1.005 → 1.01
+  function decRound(x, n, sig) {
+    if (!x || !Number.isFinite(x)) return x;
+    const [m, ex] = Math.abs(x).toExponential(14).split('e');
+    const keep = sig ? n : n + (+ex) + 1;
+    if (keep >= 15) return x;
+    if (keep < 0) return 0;
+    const div = 10n ** BigInt(15 - keep);
+    const r = (BigInt(m.replace('.', '')) + div / 2n) / div;
+    return Math.sign(x) * parseFloat(`${r}e${+ex + 1 - keep}`);
+  }
+  // Rnd: the value as the display shows it (Fix / Sci digits, or 10 significant digits)
+  function rnd(x) {
+    const d = setup.disp;
+    if (d.t === 'fix') return decRound(x, d.n, false);
+    return decRound(x, d.t === 'sci' ? (d.n || 10) : 10, true);
+  }
+  function ranInt(a, b) {
+    if (!isInt(a) || !isInt(b) || a >= b || Math.abs(a) >= 1e10 || Math.abs(b) >= 1e10 || b - a >= 1e10) ME();
+    a = Math.round(a); b = Math.round(b);
+    return a + Math.floor(Math.random() * (b - a + 1));
+  }
+  // ∫: adaptive Gauss–Kronrod (7/15 points), like the calculator; "Time Out" when it cannot reach the tolerance
+  const XGK = [0.991455371120813, 0.949107912342759, 0.864864423359769, 0.741531185599394, 0.586087235467691, 0.405845151377397, 0.207784955007898];
+  const WGK = [0.022935322010529, 0.063092092629979, 0.104790010322250, 0.140653259715525, 0.169004726639267, 0.190350578064785, 0.204432940075298, 0.209482141084728];
+  const WG = [0.129484966168870, 0.279705391489277, 0.381830050505119, 0.417959183673469];
+  // one Gauss–Kronrod step; the error estimate is scaled the QUADPACK way, since |K−G| alone is far too pessimistic
+  function gk(F, a, b) {
+    const c = (a + b) / 2, h = (b - a) / 2, fc = F(c), fs = [];
+    let rk = fc * WGK[7], rg = fc * WG[3];
+    for (let j = 0; j < 7; j++) {
+      const dx = h * XGK[j], f1 = F(c - dx), f2 = F(c + dx);
+      fs.push(f1, f2);
+      rk += WGK[j] * (f1 + f2);
+      if (j % 2 === 1) rg += WG[(j - 1) / 2] * (f1 + f2);
+    }
+    const mean = rk / 2;
+    let asc = WGK[7] * Math.abs(fc - mean);
+    for (let j = 0; j < 7; j++) asc += WGK[j] * (Math.abs(fs[2 * j] - mean) + Math.abs(fs[2 * j + 1] - mean));
+    asc *= Math.abs(h);
+    let e = Math.abs((rk - rg) * h);
+    if (asc && e) e = asc * Math.min(1, Math.pow(200 * e / asc, 1.5));
+    return { v: rk * h, e };
+  }
+  const withX = (fn) => { const old = vars.x; try { return fn(); } finally { vars.x = old; } };
+  function integrate(f, a, b, tol) {
+    if (!(tol > 0)) ME();
+    if (a === b) return 0;
+    return withX(() => {
+      // x = a + (b−a)·u²(3−2u) for u from 0 to 1: the change of variable softens a function that blows up at an end
+      // (ln x or 1/√x at 0), and the ends themselves are never evaluated
+      const F = u => { const w = 6 * u * (1 - u); if (!w) return 0; vars.x = a + (b - a) * u * u * (3 - 2 * u); return f() * (b - a) * w; };
+      // start from 16 equal pieces (so a narrow peak is not missed), then keep halving the piece with the largest error
+      const segs = [];
+      for (let i = 0; i < 16; i++) { const lo = i / 16, hi = (i + 1) / 16; segs.push({ lo, hi, ...gk(F, lo, hi) }); }
+      for (let n = 0; ; n++) {
+        let v = 0, e = 0, worst = 0;
+        segs.forEach((s, i) => { v += s.v; e += s.e; if (s.e > segs[worst].e) worst = i; });
+        // aim for about 11 correct digits, so the 10 shown are clean (∫ln x from 0 to 1 shows −1, not −1.000000004)
+        if (e <= Math.max(Math.min(tol, 1e-11) * Math.abs(v), 1e-15)) return fin(v);
+        const s = segs[worst], m = (s.lo + s.hi) / 2;
+        // out of room: accept a result within the tolerance (tol), else Time Out like the calculator
+        if (n >= 2500 || m === s.lo || m === s.hi) { if (e <= Math.max(tol * Math.abs(v), 1e-10)) return fin(v); throw { kind: 'Time' }; }
+        segs.splice(worst, 1, { lo: s.lo, hi: m, ...gk(F, s.lo, m) }, { lo: m, hi: s.hi, ...gk(F, m, s.hi) });
+      }
+    });
+  }
+  // central differences refined by Richardson extrapolation (Ridders' method), starting from step h
+  function ridders(F, a, h) {
+    const CON = 1.4, CON2 = CON * CON, N = 10, A = Array.from({ length: N }, () => []);
+    A[0][0] = (F(a + h) - F(a - h)) / (2 * h);
+    let best = A[0][0], err = Infinity;
+    for (let i = 1; i < N; i++) {
+      h /= CON;
+      A[0][i] = (F(a + h) - F(a - h)) / (2 * h);
+      let fac = CON2;
+      for (let j = 1; j <= i; j++) {
+        A[j][i] = (A[j - 1][i] * fac - A[j - 1][i - 1]) / (fac - 1);
+        fac *= CON2;
+        const e = Math.max(Math.abs(A[j][i] - A[j - 1][i]), Math.abs(A[j][i] - A[j - 1][i - 1]));
+        if (e <= err) { err = e; best = A[j][i]; }
+      }
+      if (Math.abs(A[i][i] - A[i - 1][i - 1]) >= 2 * err) break;
+    }
+    return { v: best, err };
+  }
+  function derivative(f, a, tol) {
+    if (!(tol > 0)) ME();
+    return withX(() => {
+      const F = t => { vars.x = t; return f(); };
+      let tried = false;
+      // a big first step can leave the function's domain (ln near 0) or jump over a pole (tan near 90°), so try smaller ones too
+      for (const s0 of [1e-2, 1e-4, 1e-6]) {
+        let r;
+        try { r = ridders(F, a, s0 * Math.max(Math.abs(a), 1)); } catch (e) { if (e && e.kind === 'Math') continue; throw e; }
+        tried = true;
+        if (!Number.isFinite(r.v) || r.err > Math.max(1e-7 * Math.abs(r.v), 1e-9)) continue;
+        if (Math.abs(r.v) <= r.err) return 0;   // zero within the accuracy reached
+        return fin(parseFloat(r.v.toPrecision(13)));
+      }
+      throw { kind: tried ? 'Time' : 'Math' };
+    });
+  }
+  function sigma(f, a, b) {
+    if (!isInt(a) || !isInt(b) || a > b || Math.abs(a) >= 1e10 || Math.abs(b) >= 1e10) ME();
+    a = Math.round(a); b = Math.round(b);
+    if (b - a > 1e6) throw { kind: 'Time' };
+    return withX(() => {
+      let s = 0, c = 0;   // Kahan summation keeps long sums exact
+      for (let k = a; k <= b; k++) { vars.x = k; const y = f() - c, t = s + y; c = (t - s) - y; s = t; }
+      return fin(s);
+    });
+  }
+
+  // compile(src, allowEq) → { f, g, used }: f is the whole expression (or its left side when it has "="),
+  // g the right side, used the variables in the order they appear.
+  // Every error remembers where it happened (a character offset in src), so ◀ ▶ can put the cursor there:
+  // a Syntax ERROR at the token that did not fit, a Math ERROR at the operation that failed (evalAt).
+  let evalAt = -1;
+  function compile(src, allowEq) {
+    let T = [], p = 0, inCalc = 0, polAt = -1;
+    const SE = () => { const t = T[Math.min(p, T.length) - 1] || T[0]; throw { kind: 'Syntax', at: t ? t.at : 0 }; };
+    let open = 0;
+    for (let i = 0; i < src.length; i++) { if (src[i] === '(') open++; else if (src[i] === ')' && --open < 0) throw { kind: 'Syntax', at: i }; }
+    src += ')'.repeat(open);   // closing brackets at the end may be left out
+    T = tokenize(src);
+    const used = [];
+    const peek = () => T[p];
+    const is = (t, v) => t && t.t === 'op' && t.v === v;
+    const isNum = t => t && t.t === 'num';
+    const isId = (t, pre) => t && t.t === 'id' && t.v.startsWith(pre) && /\d$/.test(t.v);
+    const startsPrimary = t => t && (t.t === 'num' || (t.t === 'id' && !isId(t, 'cv') && !isId(t, 'eg')) || is(t, '(') || is(t, '~'));
+    // an operation with one or two operands; evalAt points at it while it is being worked out
+    const op1 = (at, a, fn) => () => { const x = a(); evalAt = at; return fin(fn(x)); };
+    const op2 = (at, a, b, fn) => () => { const x = a(), y = b(); evalAt = at; return fin(fn(x, y)); };
+
+    // Priority (fx-991EX manual), lowest first: + − | × ÷ | nPr nCr | omitted × | conversions | (−) | fractions | x² x⁻¹ ! ° % ^ …
+    function expr() {
+      let f = term();
+      for (;;) {
+        const t = peek();
+        if (is(t, '+')) { p++; f = op2(t.at, f, term(), (x, y) => cancel(x + y, x, y)); }
+        else if (is(t, '-')) { p++; f = op2(t.at, f, term(), (x, y) => cancel(x - y, x, y)); }
+        else return f;
+      }
+    }
+    function term() {
+      let f = perm();
+      for (;;) {
+        const t = peek();
+        if (is(t, '*')) { p++; f = op2(t.at, f, perm(), (x, y) => x * y); }
+        else if (is(t, '/')) { p++; f = op2(t.at, f, perm(), (x, d) => { if (d === 0) ME(); return x / d; }); }
+        else return f;
+      }
+    }
+    function perm() {
+      let f = implied();
+      while (is(peek(), 'P') || is(peek(), 'C')) { const t = T[p++]; f = op2(t.at, f, implied(), t.v === 'P' ? nPr : nCr); }
+      return f;
+    }
+    // multiplication with the sign left out (2π, 2(1+2), 3sin(30)) is done before × and ÷: 6÷2(1+2) = 1
+    function implied() {
+      let f = conv();
+      while (startsPrimary(peek())) { const at = peek().at; f = op2(at, f, conv(), (x, y) => x * y); }
+      return f;
+    }
+    function conv() {
+      let f = unary();
+      while (isId(peek(), 'cv')) { const t = T[p++]; f = op1(t.at, f, CONVS[+t.v.slice(2) - 1].f); }
+      return f;
+    }
+    function unary() {
+      const t = peek();
+      if (is(t, '-') || is(t, '~')) { p++; const g = unary(); return () => -g(); }
+      if (is(t, '+')) { p++; return unary(); }
+      return fracl();
+    }
+    // Line display fractions: a⌟b and a⌟b⌟c
+    function fracl() {
+      let f = postfix();
+      const t = peek();
+      if (is(t, 'J')) {
+        p++; const b = postfix();
+        if (is(peek(), 'J')) { const t2 = T[p++], c = postfix(), w = f; f = () => { const W = w(), B = b(), d = c(); evalAt = t2.at; if (d === 0) ME(); return fin(W + B / d); }; }
+        else f = op2(t.at, f, b, (x, d) => { if (d === 0) ME(); return x / d; });
+        if (is(peek(), 'J')) { p++; SE(); }
+      }
+      return f;
+    }
+    // a power's exponent: an optional sign and one primary (the template always brackets it)
+    function operand() {
+      const t = peek();
+      if (is(t, '-') || is(t, '~')) { p++; const g = operand(); return () => -g(); }
+      if (is(t, '+')) { p++; return operand(); }
+      return primary();
+    }
+    // ×10ˣ takes a signed number
+    function tenExp() {
+      let s = 1;
+      while (is(peek(), '-') || is(peek(), '~') || is(peek(), '+')) { if (!is(T[p], '+')) s = -s; p++; }
+      if (!isNum(peek())) { p++; SE(); }
+      return s * T[p++].v;
+    }
+    function postfix() {
+      let f = primary();
+      for (;;) {
+        const t = peek(), a = f, at = t && t.at;
+        if (is(t, '^')) { p++; f = op2(at, a, operand(), pow); }
+        else if (is(t, 'X')) { p++; f = op2(at, a, operand(), xroot); }
+        else if (is(t, 'E')) { p++; const e = tenExp(); f = op1(at, a, x => x * Math.pow(10, e)); }
+        else if (is(t, '!')) { p++; f = op1(at, a, fact); }
+        else if (is(t, 'I')) { p++; f = op1(at, a, v => { if (v === 0) ME(); return 1 / v; }); }
+        else if (is(t, '%')) { p++; f = op1(at, a, x => x / 100); }
+        else if (is(t, '°')) {
+          p++; let m = 0;
+          if (isNum(T[p]) && is(T[p + 1], "'")) { m += T[p].v / 60; p += 2; }
+          if (isNum(T[p]) && is(T[p + 1], '"')) { m += T[p].v / 3600; p += 2; }
+          f = op1(at, a, x => x + m);
+        }
+        else if (is(t, "'")) { p++; let s = 0; if (isNum(T[p]) && is(T[p + 1], '"')) { s = T[p].v / 3600; p += 2; } f = op1(at, a, x => x / 60 + s); }
+        else if (is(t, '"')) { p++; f = op1(at, a, x => x / 3600); }
+        else if (is(t, 'δ')) { p++; f = op1(at, a, x => x * TODEG.DEG / TODEG[setup.angle]); }
+        else if (is(t, 'ρ')) { p++; f = op1(at, a, x => x * TODEG.RAD / TODEG[setup.angle]); }
+        else if (is(t, 'γ')) { p++; f = op1(at, a, x => x * TODEG.GRA / TODEG[setup.angle]); }
+        else if (isId(t, 'eg')) { p++; const m = ENGS[+t.v.slice(2) - 1][1]; f = op1(at, a, x => x * m); }
+        else return f;
+      }
+    }
+    function primary() {
+      const pos = p, t = T[p++];
+      if (!t) SE();
+      if (t.t === 'num') return () => t.v;
+      if (is(t, 'E')) { p--; return () => 1; }   // ×10ˣ with no number in front means 1×10ˣ
+      if (is(t, '(')) { const f = expr(); if (!is(T[p], ')')) { p++; SE(); } p++; return f; }
+      if (t.t !== 'id') SE();
+      const id = t.v;
+      if (id in NAMEV) { const L = NAMEV[id]; if (!used.includes(L)) used.push(L); return () => vars[L]; }
+      if (id === 'pi') return () => Math.PI;
+      if (id === 'e') return () => Math.E;
+      if (id === 'ans') return () => ans;
+      if (id === 'ran') return () => Math.floor(Math.random() * 1000) / 1000;
+      if (isId(t, 'k')) { const c = CONSTS[+id.slice(1) - 1]; return () => c.v; }
+      if (isId(t, 'cv') || isId(t, 'eg')) SE();   // a conversion or symbol needs a value before it
+      if (!is(T[p], '(')) { p++; SE(); } p++;
+      const calc = id === 'integ' || id === 'deriv' || id === 'sigma';
+      if (calc) { if (inCalc) SE(); inCalc++; }   // ∫, d/dx and Σ cannot be nested
+      // after each argument is worked out, evalAt points back at the function, so a domain error lands on it
+      const arg = f => () => { const v = f(); evalAt = t.at; return v; };
+      const args = [arg(expr())];
+      while (is(T[p], ',')) { p++; args.push(arg(expr())); }
+      if (!is(T[p], ')')) { p++; SE(); } p++;
+      if (calc) inCalc--;
+      if (id === 'pol' || id === 'rec') polAt = pos;
+      const g = makeFn(id, args);
+      return () => { const v = g(); evalAt = t.at; return fin(v); };
+    }
+    function makeFn(id, A) {
+      const n = A.length, need = k => { if (n !== k) SE(); };
+      switch (id) {
+        case 'sin': case 'cos': case 'tan': need(1); return () => trig(id, A[0]());
+        case 'asin': case 'acos': need(1); return () => { const x = A[0](); if (Math.abs(x) > 1) ME(); return unrad(Math[id](x)); };
+        case 'atan': need(1); return () => unrad(Math.atan(A[0]()));
+        case 'sinh': case 'cosh': need(1); return () => { const x = A[0](); if (Math.abs(x) > 230.2585092) ME(); return Math[id](x); };
+        case 'tanh': case 'asinh': need(1); return () => Math[id](A[0]());
+        case 'acosh': need(1); return () => { const x = A[0](); if (x < 1) ME(); return Math.acosh(x); };
+        case 'atanh': need(1); return () => { const x = A[0](); if (Math.abs(x) >= 1) ME(); return Math.atanh(x); };
+        case 'sqrt': need(1); return () => { const x = A[0](); if (x < 0) ME(); return Math.sqrt(x); };
+        case 'cbrt': need(1); return () => Math.cbrt(A[0]());
+        case 'root': need(2); return () => xroot(A[0](), A[1]());
+        case 'log': if (n === 1) return () => { const x = A[0](); if (x <= 0) ME(); return Math.log10(x); }; need(2); return () => logb(A[0](), A[1]());
+        case 'logb': need(2); return () => logb(A[0](), A[1]());
+        case 'ln': need(1); return () => { const x = A[0](); if (x <= 0) ME(); return Math.log(x); };
+        case 'abs': need(1); return () => Math.abs(A[0]());
+        case 'rnd': need(1); return () => rnd(A[0]());
+        case 'ranint': need(2); return () => ranInt(A[0](), A[1]());
+        case 'pol': need(2); return () => { const x = A[0](), y = A[1](); if (x === 0 && y === 0) ME(); const r = Math.hypot(x, y), th = unrad(Math.atan2(y, x)); vars.x = r; vars.y = th; extra = { t: 'pair', a: ['r', r], b: ['θ', th] }; return r; };
+        case 'rec': need(2); return () => { const r = A[0](), th = A[1](); if (r < 0) ME(); const px = r * trig('cos', th), py = r * trig('sin', th); vars.x = px; vars.y = py; extra = { t: 'pair', a: ['x', px], b: ['y', py] }; return px; };
+        case 'integ': if (n !== 3 && n !== 4) SE(); return () => integrate(A[0], A[1](), A[2](), n === 4 ? A[3]() : 1e-5);
+        case 'deriv': if (n !== 2 && n !== 3) SE(); return () => derivative(A[0], A[1](), n === 3 ? A[2]() : 1e-10);
+        case 'sigma': need(3); return () => sigma(A[0], A[1](), A[2]());
+      }
+      SE();
+    }
+    if (!T.length) SE();
+    const f = expr();
+    let g = null;
+    if (is(peek(), 'Q')) { p++; if (!allowEq) SE(); g = expr(); }
+    if (p !== T.length) { p++; SE(); }
+    if (polAt >= 0 && (polAt !== 0 || g)) SE();   // Pol and Rec must be the whole calculation
+    return { f, g, used };
+  }
+
+  // =============== formatting ===============
+  const minus = s => s.replace(/^-/, '−');
+  const decMark = s => setup.dec === 'comma' ? s.replace('.', ',') : s;
+  const sepChar = () => setup.dec === 'comma' ? '.' : ',';
+  const thousands = s => setup.sep ? s.replace(/^(−?)(\d+)/, (m, sg, d) => sg + d.replace(/\B(?=(\d{3})+(?!\d))/g, sepChar())) : s;
+  const num = s => decMark(thousands(s));
+  const expHTML = (m, e) => `${m}<span class="x10">×10</span><sup>${minus(String(e))}</sup>`;
+  // a value with at most 10 significant digits, written without exponent form
+  const plain = v => /e/.test(String(v)) ? v.toFixed(20).replace(/\.?0+$/, '') : String(v);
+  const ENG_SYM = { '-15': 'f', '-12': 'p', '-9': 'n', '-6': 'μ', '-3': 'm', '3': 'k', '6': 'M', '9': 'G', '12': 'T', '15': 'P', '18': 'E' };
+  function engHTML(x, e) {
+    const m = parseFloat((x / Math.pow(10, e)).toPrecision(10));
+    if (setup.eng && (ENG_SYM[e] || e === 0)) return num(minus(plain(m))) + (ENG_SYM[e] || '');
+    return expHTML(num(minus(plain(m))), e);
+  }
+  // the decimal form of a value, following the Number Format and Engineer Symbol settings
+  function fmt(x, normOnly) {
+    if (Object.is(x, -0) || Math.abs(x) < 1e-99) x = 0;
+    const d = normOnly ? { t: 'norm', n: 1 } : setup.disp;
+    if (d.t === 'sci') {
+      const n = d.n || 10;
+      const [m, e] = decRound(x, n, true).toExponential(n - 1).split('e');
+      return expHTML(decMark(minus(m)), +e);
+    }
+    if (d.t === 'fix') {
+      const v = decRound(x, d.n, false);
+      if (Math.abs(v) < 1e10) { const s = v.toFixed(d.n); return num(minus(/^-0\.?0*$/.test(s) ? s.slice(1) : s)); }
+      const [m, e] = v.toExponential(d.n).split('e');
+      return expHTML(decMark(minus(m)), +e);
+    }
+    const v = decRound(x, 10, true), a = Math.abs(v);
+    if (!normOnly && setup.eng && a !== 0 && (a >= 1000 || a < 1)) {
+      const e = 3 * Math.floor(Math.floor(Math.log10(a) + 1e-12) / 3);
+      if (ENG_SYM[e]) return engHTML(v, e);
+    }
+    // Norm: 10 significant digits; exponent form from 10^10 up, and below 10^-2 (Norm 1) or 10^-9 (Norm 2)
+    const lo = d.t === 'norm' && d.n === 2 ? 1e-9 : 1e-2;
+    if (a !== 0 && (a >= 1e10 || a < lo)) {
+      const [m, e] = v.toExponential(9).split('e');
+      return expHTML(decMark(minus(m.replace(/\.?0+$/, ''))), +e);
+    }
+    return num(minus(plain(v)));
+  }
+  function toFrac(x, maxD) {
+    if (!Number.isFinite(x) || isInt(x)) return null;
+    const sign = x < 0 ? -1 : 1; x = Math.abs(x);
+    let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = x;
+    for (let i = 0; i < 40; i++) {
+      const a = Math.floor(b);
+      [h1, h0] = [a * h1 + h0, h1];
+      [k1, k0] = [a * k1 + k0, k1];
+      if (k1 > maxD) return null;
+      if (Math.abs(x - h1 / k1) <= 5e-15 * x) return { n: sign * h1, d: k1 };
+      const rest = b - a; if (rest < 1e-15) break; b = 1 / rest;
+    }
+    return null;
+  }
+  // a fraction is shown only if whole part, numerator, denominator and separators fit in 10 digits (Casio rule)
+  function fracFits(x, mixed) {
+    if (Math.abs(x) >= 1e10) return null;
+    const f = toFrac(x, 1e9); if (!f) return null;
+    const N = Math.abs(f.n), w = mixed ? Math.floor(N / f.d) : 0;
+    const len = w ? String(w).length + String(N - w * f.d).length + String(f.d).length + 2 : String(N).length + String(f.d).length + 1;
+    return len <= 10 ? f : null;
+  }
+  const stack = (n, d) => `<span class="frac"><span class="n">${n}</span><span class="d">${d}</span></span>`;
+  function fracHTML(f, mixed, line) {
+    const sg = f.n < 0 ? '−' : '', N = Math.abs(f.n);
+    if (mixed && N > f.d) {
+      const w = Math.floor(N / f.d);
+      return line ? `${sg}${w}⌟${N - w * f.d}⌟${f.d}` : `${sg}${w}${stack(N - w * f.d, f.d)}`;
+    }
+    return line ? `${sg}${N}⌟${f.d}` : sg + stack(N, f.d);
+  }
+  function dmsHTML(x) {
+    const sg = x < 0 ? '−' : ''; const a = Math.abs(x);
+    let d = Math.floor(a), mf = (a - d) * 60, m = Math.floor(mf), s = (mf - m) * 60;
+    s = Math.round(s * 100) / 100;
+    if (s >= 60) { s -= 60; m++; } if (m >= 60) { m -= 60; d++; }
+    return `${sg}${d}°${m}′${decMark(String(parseFloat(s.toFixed(2))))}″`;
+  }
+  // FACT: prime factors up to 3 digits; what is left over (a factor of 1018081 = 1009² or more) stays in brackets
+  function factHTML(x) {
+    let n = Math.round(x);
+    if (n < 2) return String(n);
+    const parts = [];
+    for (let p = 2; p <= 997 && p * p <= n; p += (p === 2 ? 1 : 2)) { let c = 0; while (n % p === 0) { n /= p; c++; } if (c) parts.push(c > 1 ? `${p}<sup>${c}</sup>` : `${p}`); }
+    if (n > 1) parts.push(n < 1018081 ? String(n) : `(${n})`);
+    return parts.join('×');
+  }
+
+  // =============== exact answers (MathI/MathO): fractions, √ forms, π forms ===============
+  // Like the real calculator, the exact form is recognised from the 15-digit result. √ forms follow the
+  // manual's ranges: ±a√b/c ± d√e/f with a,d < 100, b,e < 1000, c,f < 100; π forms need |x| < 10⁶.
+  function squareFree(n) {
+    if (!Number.isInteger(n) || n < 1 || n > 1e12) return null;
+    let o = 1, i = 1, m = n;
+    for (let p = 2; p * p <= m; p++) { let c = 0; while (m % p === 0) { m /= p; c++; } o *= p ** Math.floor(c / 2); if (c % 2) i *= p; }
+    return [o, i * m];
+  }
+  const flat = seq => seq.flatMap(it => it.s ? [it, ...it.s.flatMap(flat)] : [it]);
+  const constVal = seq => { try { if (flat(seq).some(it => it.k === 't' && (NAMEV[it.v] || /^ran/.test(it.v)))) return null; const c = compile(comp(seq), false); return c.f(); } catch (e) { return null; } };
+  function exactCtx(items) {
+    const all = flat(items), toks = all.filter(it => it.k === 't').map(it => it.v);
+    const ctx = { pi: false, surd: false, rads: new Set() };
+    if (toks.includes('pi') || (setup.angle === 'RAD' && toks.some(v => /^a(sin|cos|tan)\($/.test(v)))) ctx.pi = true;
+    const base = [];
+    const addRad = v => { if (v == null || !(v > 0)) return; const f = Number.isInteger(v) ? { n: v, d: 1 } : toFrac(v, 1e6); if (!f) return; const q = squareFree(Math.abs(f.n) * f.d); if (q && q[1] > 1 && q[1] < 1000) base.push(q[1]); };
+    for (const it of all) {
+      if (it.k === 'sqrt') { ctx.surd = true; addRad(constVal(it.s[0])); }
+      else if (it.k === 'root') { ctx.surd = true; const i = constVal(it.s[0]); if (i === 2) addRad(constVal(it.s[1])); }
+      else if (it.k === 'pow') { const e = constVal(it.s[0]); if (e != null && !isInt(e)) ctx.surd = true; }
+      else if (it.k === 't' && /^(sqrt|root)\($|^\^\(/.test(it.v)) ctx.surd = true;
+      else if (it.k === 't' && /^(sin|cos|tan)\($/.test(it.v)) { ctx.surd = true; base.push(2, 3); }
+    }
+    if (ctx.surd) {
+      const uniq = [...new Set(base)];
+      uniq.forEach(b => ctx.rads.add(b));
+      for (let i = 0; i < uniq.length; i++) for (let j = i + 1; j < uniq.length; j++) { const q = squareFree(uniq[i] * uniq[j]); if (q && q[1] > 1 && q[1] < 1000) ctx.rads.add(q[1]); }
+      if (!ctx.rads.size) for (const b of [2, 3, 5, 6, 7]) ctx.rads.add(b);
+    }
+    return ctx;
+  }
+  // p/q with |p| < 100 and q < 100 (the coefficient limits of √ forms), or null
+  function smallFrac(x) {
+    if (!Number.isFinite(x) || Math.abs(x) >= 99.5) return null;
+    const sg = x < 0 ? -1 : 1, ax = Math.abs(x);
+    let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = ax;
+    for (let i = 0; i < 14; i++) {
+      const a = Math.floor(b);
+      [h1, h0] = [a * h1 + h0, h1];
+      [k1, k0] = [a * k1 + k0, k1];
+      if (k1 >= 100 || h1 >= 100) return null;
+      if (Math.abs(ax - h1 / k1) <= 1e-11 * Math.max(1, ax)) return h1 ? { n: sg * h1, d: k1 } : null;
+      const r = b - a; if (r < 1e-13) return null;
+      b = 1 / r;
+    }
+    return null;
+  }
+  const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a; };
+  // ±a√b/c ± d√e/f: up to two terms (a whole number or fraction counts as a term), each with a, d < 100, b, e < 1000, c, f < 100.
+  // A candidate must give back the answer to about 13 digits, so an irrational decimal is never dressed up as a √ form.
+  function surdForm(v, radSet) {
+    const rads = [...radSet].sort((a, b) => b - a);
+    const make = terms => {
+      const val = terms.reduce((s, t) => s + t.n / t.d * Math.sqrt(t.r), 0);
+      const size = terms.reduce((s, t) => s + Math.abs(t.n / t.d * Math.sqrt(t.r)), 0);
+      if (Math.abs(val - v) > 1e-13 * size) return null;
+      const c = terms.reduce((l, t) => l / gcd(l, t.d) * t.d, 1);
+      const q = terms.filter(t => t.r === 1).reduce((s, t) => s + t.n * c / t.d, 0);
+      return { c, q, t: terms.filter(t => t.r > 1).map(t => [t.n * c / t.d, t.r]) };
+    };
+    for (const b of rads) { const f = smallFrac(v / Math.sqrt(b)); if (f) { const m = make([{ ...f, r: b }]); if (m) return m; } }
+    for (const b of rads) {
+      const sb = Math.sqrt(b);
+      for (let d = 1; d < 100; d++) for (let n = -99; n <= 99; n++) {
+        if (!n || gcd(n, d) !== 1) continue;
+        const f = smallFrac(v - n * sb / d);
+        if (f) { const m = make([f.d ? { ...f, r: 1 } : f, { n, d, r: b }]); if (m) return m; }
+      }
+    }
+    for (const b of rads) for (const e of rads) {
+      if (e >= b) continue;
+      const sb = Math.sqrt(b), se = Math.sqrt(e);
+      for (let d = 1; d < 100; d++) for (let n = -99; n <= 99; n++) {
+        if (!n || gcd(n, d) !== 1) continue;
+        const f = smallFrac((v - n * sb / d) / se);
+        if (f) { const m = make([{ n, d, r: b }, { ...f, r: e }]); if (m) return m; }
+      }
+    }
+    return null;
+  }
+  function exactForm(v, ctx) {
+    if (!Number.isFinite(v) || isInt(v)) return null;
+    const f = fracFits(v, false);
+    if (f) return { t: 'frac', f };
+    if (ctx.surd && Math.abs(v) < 1e6) { const s = surdForm(v, ctx.rads); if (s) return { t: 'surd', s }; }
+    if (ctx.pi && Math.abs(v) < 1e6) {
+      const q = v / Math.PI;
+      if (isInt(q)) return { t: 'pi', f: { n: Math.round(q), d: 1 } };
+      const g = fracFits(q, false); if (g) return { t: 'pi', f: g };
+    }
+    return null;
+  }
+  function surdHTML(s) {
+    const term = ([a, b], first) => { const sg = a < 0 ? '−' : first ? '' : '+'; const A = Math.abs(a); return `${sg}${A === 1 ? '' : A}√${b}`; };
+    let h = s.q ? minus(String(s.q)) : '';
+    s.t.forEach(([a, b], i) => { h += term([a, b], !h && i === 0); });
+    if (s.c === 1) return h;
+    // a single negative term shows its sign in front of the fraction
+    if (!s.q && s.t.length === 1 && s.t[0][0] < 0) return '−' + stack(term([-s.t[0][0], s.t[0][1]], true), s.c);
+    return stack(h, s.c);
+  }
+  function piHTML(f, mixed) {
+    const sg = f.n < 0 ? '−' : '', N = Math.abs(f.n);
+    if (f.d === 1) return `${sg}${N === 1 ? '' : N}π`;
+    return `${sg}${stack(N, f.d)}π`;
+  }
+
+  // =============== editor (natural display tree) ===============
+  // A sequence is an array of items. Token: {k:'t', d, v, h?}. Template: {k, s:[slot sequences]}.
+  const tok = (d, v, h) => h ? { k: 't', d, v, h } : { k: 't', d, v };
+  const clone = x => JSON.parse(JSON.stringify(x));
+  function setRoot(r) { root = r; cur = { seq: root, pos: root.length }; }
+  function locate(target, seq = root) {
+    for (let i = 0; i < seq.length; i++) {
+      const it = seq[i]; if (!it.s) continue;
+      for (let j = 0; j < it.s.length; j++) {
+        if (it.s[j] === target) return { pseq: seq, i, j, item: it };
+        const r = locate(target, it.s[j]); if (r) return r;
+      }
+    }
+    return null;
+  }
+  function pathTo(target, seq = root, path = []) {
+    if (seq === target) return path;
+    for (let i = 0; i < seq.length; i++) {
+      const it = seq[i]; if (!it.s) continue;
+      for (let j = 0; j < it.s.length; j++) { const r = pathTo(target, it.s[j], [...path, [i, j]]); if (r) return r; }
+    }
+    return null;
+  }
+  const seqAt = (path, r) => path.reduce((s, [i, j]) => s[i].s[j], r);
+  // UNDO (ALPHA DEL) undoes the last key; pressing it again redoes it
+  const snap = () => ({ root: clone(root), path: pathTo(cur.seq) || [], pos: cur.pos });
+  function restore(s) {
+    root = s.root; const seq = seqAt(s.path, root); cur = { seq, pos: Math.min(s.pos, seq.length) };
+    evaluated = false; err = null; extra = null; tag = ''; view = { t: 'dec' }; multi = null; histIdx = -1;
+  }
+  function doUndo() { if (!undoSnap || isLine()) return; const now = snap(); restore(undoSnap); undoSnap = now; }
+
+  // kind: 'start' (a number or function), 'op' (needs a value before it), 'post' (written after a value)
+  function prep(kind, v) {
+    histIdx = -1; draft = null; tag = ''; multi = null;
+    // an operator on an empty screen carries on from the last answer (× 2 → Ans×2)
+    if (!evaluated && !err && !root.length && (kind === 'op' || kind === 'post') && ![')', '°', 'J', 'Q', ':'].includes(v)) { setRoot([tok('Ans', 'ans')]); return; }
+    if (evaluated) {
+      evaluated = false; view = { t: 'dec' }; extra = null;
+      if (kind === 'op' || kind === 'post') {
+        if (lastShown !== ans) { ans = lastShown; save(); }   // carry on from the number on screen, even an older one brought back with ▲
+        setRoot([tok('Ans', 'ans')]);
+      } else setRoot([]);
+    }
+  }
+  function place(item) {
+    if (ovr && isLine() && cur.pos < cur.seq.length && cur.seq[cur.pos].k === 't') cur.seq.splice(cur.pos, 1, item);   // overwrite mode (Line input)
+    else cur.seq.splice(cur.pos, 0, item);
+    cur.pos++;
+  }
+  // SHIFT INS (Natural Display): the value right of the cursor becomes the argument of the next function
+  function grabArg() {
+    if (!insArg) return null;
+    insArg = false;
+    const s = cur.seq; let i = cur.pos;
+    if (i < s.length && s[i].k === 't' && s[i].v.endsWith('(')) {
+      for (let open = 0; i < s.length; i++) {
+        const it = s[i]; if (it.k !== 't') continue;
+        if (it.v.endsWith('(')) open++;
+        else if (it.v === ')' && --open === 0) { i++; break; }
+      }
+    } else {
+      while (i < s.length && !(s[i].k === 't' && (/^[-+*\/PC,()~JQ:]$/.test(s[i].v) || s[i].v.endsWith('(')))) i++;
+    }
+    return s.splice(cur.pos, i - cur.pos);
+  }
+  function insTok(d, v, kind = 'start', h) {
+    prep(kind, v);
+    const arg = v.endsWith('(') && !isLine() ? grabArg() : null;
+    place(tok(d, v, h));
+    if (arg && arg.length) { arg.forEach(place); place(tok(')', ')')); }
+  }
+  // enter: slot index to put the cursor in, or 'after'; argSlot: the slot SHIFT INS fills
+  function insTpl(k, slots, enter, kind = 'start', argSlot) {
+    prep(kind);
+    const arg = argSlot != null ? grabArg() : null;
+    if (arg && arg.length) { slots[argSlot].push(...arg); const empty = slots.findIndex(s => !s.length); enter = empty < 0 ? 'after' : empty; }
+    const item = { k, s: slots };
+    cur.seq.splice(cur.pos, 0, item);
+    if (enter === 'after') cur.pos++;
+    else cur = { seq: item.s[enter], pos: item.s[enter].length };
+  }
+  // right after a result the answer goes in first (numerator, or the whole-number part of a mixed fraction)
+  function insFrac(k) {
+    if (isLine()) { insTok('⌟', 'J', 'op'); return; }
+    const fromAns = evaluated && !err;
+    prep('start');
+    const slots = k === 'frac' ? [[], []] : [[], [], []];
+    if (fromAns) slots[0].push(tok('Ans', 'ans'));
+    else if (!insArg) {
+      let i = cur.pos;
+      while (i > 0 && cur.seq[i - 1].k === 't' && /^[0-9.]$/.test(cur.seq[i - 1].v)) i--;
+      if (i < cur.pos) { slots[0] = cur.seq.splice(i, cur.pos - i); cur.pos = i; insTpl(k, slots, 1); return; }
+    }
+    insTpl(k, slots, fromAns ? 1 : 0, 'start', k === 'frac' && !fromAns ? 0 : undefined);
+  }
+  function enterEdit(atStart) {
+    histIdx = -1; draft = null; tag = ''; multi = null;
+    if (err) { err = null; evaluated = false; cur = errCur && (errCur.seq === root || pathTo(errCur.seq)) ? errCur : { seq: root, pos: root.length }; errCur = null; return; }
+    evaluated = false; view = { t: 'dec' }; extra = null;
+    cur = { seq: root, pos: atStart ? 0 : root.length };
+  }
+  function right() {
+    if (evaluated || err) return enterEdit(!err);
+    const seq = cur.seq, pos = cur.pos;
+    if (pos < seq.length) { const it = seq[pos]; if (it.s) cur = { seq: it.s[0], pos: 0 }; else cur.pos++; return; }
+    if (seq === root) { cur.pos = 0; return; }
+    const L = locate(seq);
+    if (L.j < L.item.s.length - 1) cur = { seq: L.item.s[L.j + 1], pos: 0 };
+    else cur = { seq: L.pseq, pos: L.i + 1 };
+  }
+  function left() {
+    if (evaluated || err) return enterEdit(false);
+    const seq = cur.seq, pos = cur.pos;
+    if (pos > 0) { const it = seq[pos - 1]; if (it.s) { const last = it.s[it.s.length - 1]; cur = { seq: last, pos: last.length }; } else cur.pos--; return; }
+    if (seq === root) { cur.pos = root.length; return; }
+    const L = locate(seq);
+    if (L.j > 0) { const pv = L.item.s[L.j - 1]; cur = { seq: pv, pos: pv.length }; }
+    else cur = { seq: L.pseq, pos: L.i };
+  }
+  // SHIFT ◀ / SHIFT ▶ jump out of the template the cursor is in
+  function jumpOut(dir) {
+    if (evaluated || err || cur.seq === root) return;
+    const L = locate(cur.seq);
+    cur = { seq: L.pseq, pos: dir > 0 ? L.i + 1 : L.i };
+  }
+  // ▲▼ inside a template move between its boxes (numerator ⇄ denominator, limits ⇄ body)
+  const VNAV = {
+    frac: { up: { 1: 0 }, dn: { 0: 1 } }, mixed: { up: { 2: 1 }, dn: { 1: 2 } }, root: { up: { 1: 0 }, dn: { 0: 1 } },
+    integ: { up: { 0: 2, 1: 2 }, dn: { 0: 1, 2: 1 } }, sigma: { up: { 0: 2, 1: 2 }, dn: { 0: 1, 2: 1 } }, deriv: { up: { 1: 0 }, dn: { 0: 1 } }, logb: { up: { 0: 1 }, dn: { 1: 0 } },
+  };
+  function vert(dir) {
+    if (!evaluated && !err && cur.seq !== root) {
+      let s = cur.seq;
+      while (s !== root) {
+        const L = locate(s), map = VNAV[L.item.k], nj = map && map[dir < 0 ? 'up' : 'dn'][L.j];
+        if (nj != null) { const t = L.item.s[nj]; cur = { seq: t, pos: Math.min(cur.pos, t.length) }; return; }
+        s = L.pseq;
+      }
+      return;
+    }
+    // at top level: ▲ steps to older calculations, ▼ to newer ones (histIdx is the entry on screen)
+    if (!history.length) return;
+    const i = histIdx < 0 ? (dir < 0 ? 0 : -1) : histIdx + (dir < 0 ? 1 : -1);
+    if (i >= history.length) return;
+    if (i < 0) {
+      if (histIdx < 0 || !draft) return;
+      root = draft; cur = { seq: root, pos: root.length }; draft = null; histIdx = -1;
+      evaluated = false; err = null; extra = null; tag = ''; view = { t: 'dec' };
+      return;
+    }
+    if (histIdx < 0) draft = !evaluated && !err && root.length ? root : null;
+    showHist(i);
+  }
+  // put history entry i on screen, as if ▲/▼ had stepped to it
+  function showHist(i) {
+    histIdx = i; multi = null; tag = '';
+    const h = history[i];
+    root = clone(h.root); cur = { seq: root, pos: root.length };
+    err = null; extra = h.extra || null; evaluated = true; lastShown = h.r; calcItems = statements(root).slice(-1)[0]; view = defaultView(h.r, calcItems, extra); undoSnap = null;
+  }
+  function del() {
+    if (evaluated || err) { enterEdit(false); return; }
+    const seq = cur.seq, pos = cur.pos;
+    if (ovr && isLine() && pos < seq.length) { seq.splice(pos, 1); return; }
+    if (pos > 0) {
+      const it = seq[pos - 1];
+      if (!it.s) { seq.splice(pos - 1, 1); cur.pos--; return; }
+      if (it.s.every(s => !s.length)) { seq.splice(pos - 1, 1); cur.pos--; return; }
+      const last = it.s[it.s.length - 1];
+      cur = { seq: last, pos: last.length };
+      if (last.length) del();
+      return;
+    }
+    if (seq === root) return;
+    const L = locate(seq);
+    if (L.item.s.every(s => !s.length)) { L.pseq.splice(L.i, 1); cur = { seq: L.pseq, pos: L.i }; return; }
+    if (L.j > 0) { const pv = L.item.s[L.j - 1]; cur = { seq: pv, pos: pv.length }; return; }
+    const fl = [].concat(...L.item.s);
+    L.pseq.splice(L.i, 1, ...fl);
+    cur = { seq: L.pseq, pos: L.i };
+  }
+
+  // compile tree → engine string. spans (optional) collects where each item landed in the string,
+  // so an error offset can be turned back into a cursor position.
+  const TPL = {
+    frac: ['((', 0, ')/(', 1, '))'], mixed: ['((', 0, ')+(', 1, ')/(', 2, '))'], pow: ['^(', 0, ')'],
+    sqrt: [' sqrt(', 0, ')'], cbrt: [' cbrt(', 0, ')'], root: [' root(', 0, ',', 1, ')'], logb: [' logb(', 0, ',', 1, ')'], abs: [' abs(', 0, ')'],
+    integ: [' integ(', 0, ',', 1, ',', 2, ')'], deriv: [' deriv(', 0, ',', 1, ')'], sigma: [' sigma(', 0, ',', 1, ',', 2, ')'],
+  };
+  function comp(seq, spans, base = 0) {
+    if (!seq.length) throw { kind: 'Syntax', slot: seq };
+    let s = '';
+    seq.forEach((it, idx) => {
+      const start = s.length;
+      if (it.k === 't') s += /^[a-z]/.test(it.v) ? ' ' + it.v : it.v;   // a space keeps neighbouring names apart
+      else if (it.k === 'e10') { const x = comp(it.s[0]); if (!/^[~+\-]*\d+\.?\d*$/.test(x)) throw { kind: 'Syntax', slot: it.s[0] }; s += 'E' + x; }
+      else for (const part of TPL[it.k] || []) s += typeof part === 'number' ? comp(it.s[part], spans, base + s.length) : part;
+      if (spans) spans.push({ a: base + start, b: base + s.length, seq, idx });
+    });
+    return s;
+  }
+  // where ◀ ▶ put the cursor after an error: right after the item at the error, inside templates too
+  function errCursor(e, spans, items) {
+    if (e && e.slot) return { seq: e.slot, pos: 0 };
+    const at = e && e.kind === 'Syntax' ? e.at : evalAt;
+    let best = null;
+    if (at != null && at >= 0) for (const sp of spans) if (at >= sp.a && at < sp.b && (!best || sp.b - sp.a < best.b - best.a)) best = sp;
+    if (!best) return null;
+    if (best.seq === items) { const k = root.indexOf(items[best.idx]); return k < 0 ? null : { seq: root, pos: k + 1 }; }
+    return { seq: best.seq, pos: best.idx + 1 };
+  }
+  // the parts of a multi-statement, split at ":" on the top level
+  function statements(items) {
+    const out = [[]];
+    items.forEach(it => { if (it.k === 't' && it.v === ':') out.push([]); else out[out.length - 1].push(it); });
+    return out;
+  }
+  const DMS_MARKS = ['°', "'", '"'];
+  // plain arithmetic on °′″ values stays in °′″ (× ÷ between two °′″ values gives a decimal)
+  function dmsArithmetic(all) {
+    if (!all.some(it => DMS_MARKS.includes(it.v)) || !all.every(it => it.k === 't' && /^([0-9.+\-*\/()~°'"])$/.test(it.v))) return false;
+    const groups = [], ops = []; let g = [];
+    all.forEach(t => { if (/^[+\-*\/]$/.test(t.v) && g.length) { groups.push(g); ops.push(t.v); g = []; } else g.push(t); });
+    groups.push(g);
+    const hasMark = gr => gr.some(t => DMS_MARKS.includes(t.v));
+    return !ops.some((o, i) => (o === '*' || o === '/') && hasMark(groups[i]) && hasMark(groups[i + 1]));
+  }
+  // How a fresh result is shown:
+  //  MathI/MathO   exact form when there is one (fraction, √ form, π form), else decimal
+  //  LineI/LineO   a fraction only when fractions (⌟) were typed and no decimals
+  //  …/DecimalO    always decimal (S⇔D switches)
+  function defaultView(v, items, ex = extra) {
+    if (ex || flat(items).some(it => it.k === 't' && it.v === 'rnd(')) return { t: 'dec' };
+    if (dmsArithmetic(flat(items)) && Math.abs(v) < 1e7) return { t: 'dms' };
+    const mixed = setup.frac === 'abc';
+    if (setup.io === 'MM') { const form = exactForm(v, exactCtx(items)); return form ? { t: 'exact', form, mixed } : { t: 'dec' }; }
+    if (setup.io === 'LL') {
+      const toks = flat(items).filter(it => it.k === 't');
+      if (toks.some(it => it.v === 'J') && !toks.some(it => it.v.includes('.'))) { const f = fracFits(v, mixed); if (f && !isInt(v)) return { t: 'exact', form: { t: 'frac', f: fracFits(v, false) || f }, mixed }; }
+    }
+    return { t: 'dec' };
+  }
+  function errOf(e) {
+    if (e && e.kind) return e.kind;
+    if (e instanceof RangeError) return 'Stack';
+    console.error(e);
+    return 'Math';
+  }
+  let calcItems = null;   // the statement whose answer is on screen (for S⇔D)
+  function pushHistory(v) {
+    const top = history[0];
+    if (!top || top.r !== v || JSON.stringify(top.root) !== JSON.stringify(root)) history.unshift({ root: clone(root), r: v, ...(extra ? { extra: clone(extra) } : {}) });
+    history = history.slice(0, 30);
+  }
+  // = (and ≈ when approx): a multi-statement shows one part per press
+  function doEval(approx) {
+    if (!root.length) return;
+    const parts = statements(root);
+    const i = multi && evaluated && multi.n === parts.length && multi.i < parts.length - 1 ? multi.i + 1 : 0;
+    const items = parts[i];
+    errCur = null; extra = null; tag = ''; evalAt = -1;
+    const spans = [];
+    try {
+      if (!items.length) SE();
+      const c = compile(comp(items, spans), false);
+      const v = c.f();
+      ans = v; lastShown = v; evaluated = true; err = null; histIdx = 0; draft = null; calcItems = items; undoSnap = null;
+      multi = parts.length > 1 ? { i, n: parts.length } : null;
+      view = approx ? { t: 'dec' } : defaultView(v, items);
+      if (!multi || i === parts.length - 1) pushHistory(v); else histIdx = -1;
+      save();
+    } catch (e) {
+      err = errOf(e); evaluated = true; extra = null; multi = null;
+      errCur = errCursor(e, spans, items);
+    }
+  }
+  function acAll() {
+    setRoot([]); evaluated = false; err = null; errCur = null; view = { t: 'dec' }; extra = null; tag = '';
+    sto = insArg = false; screen = null; histIdx = -1; draft = null; multi = null;
+  }
+  const showing = () => evaluated && !err;
+  // M+ / M−: work out the input (if any) and add the answer to M
+  function memAdd(sign) {
+    if (!evaluated && root.length) { doEval(false); if (err) return; }
+    else if (!evaluated) return;
+    const m = vars.M + sign * lastShown;
+    if (!Number.isFinite(m) || Math.abs(m) >= 1e100) { err = 'Math'; return; }
+    vars.M = Math.abs(m) < 1e-99 ? 0 : m; tag = sign > 0 ? 'M+' : 'M−'; save();
+  }
+  // STO then a variable key stores the answer (the input is worked out first): 3+5 STO A → 8
+  function doSto(L) {
+    if (!evaluated && root.length) { doEval(false); if (err) return; }
+    if (err) return;
+    if (!evaluated) { setRoot([tok('Ans', 'ans')]); evaluated = true; lastShown = ans; view = { t: 'dec' }; }
+    vars[L] = lastShown; tag = `→${L}`; save();
+  }
+  function sdKey() {
+    if (!showing() || extra) return;
+    if (view.t === 'exact') { view = { t: 'dec' }; return; }
+    if (view.t !== 'dec') { view = { t: 'dec' }; return; }
+    const mixed = setup.frac === 'abc';
+    let form = null;
+    if (setup.io[0] === 'M') form = exactForm(lastShown, exactCtx(calcItems || root));
+    else { const f = fracFits(lastShown, false); if (f) form = { t: 'frac', f }; }
+    if (form) view = { t: 'exact', form, mixed };
+  }
+  // SHIFT S⇔D: mixed fraction ⇔ improper fraction (a decimal answer becomes a mixed fraction when it fits)
+  function mixedKey() {
+    if (!showing() || extra) return;
+    if (view.t === 'exact' && view.form.t === 'frac') { const m = !view.mixed; if (!m || fracFits(lastShown, true)) view = { ...view, mixed: m }; return; }
+    if (view.t === 'dec') { const f = fracFits(lastShown, true); if (f) view = { t: 'exact', form: { t: 'frac', f: fracFits(lastShown, false) }, mixed: true }; }
+  }
+  // ENG lowers the exponent by 3 (1.234×10³ → 1234×10⁰), SHIFT ENG (←) raises it (→ 0.001234×10⁶)
+  function engKey(dir) {
+    if (!showing() || extra) return;
+    const a = Math.abs(lastShown);
+    const base = a === 0 ? 0 : 3 * Math.floor(Math.floor(Math.log10(decRound(a, 10, true)) + 1e-12) / 3);
+    const symbolShown = setup.eng && view.t === 'dec' && setup.disp.t === 'norm' && a !== 0 && (a >= 1000 || a < 1) && ENG_SYM[base];
+    if (view.t === 'eng') view = { t: 'eng', e: view.e + 3 * dir };
+    else if (symbolShown) view = { t: 'eng', e: base + 3 * dir };
+    else view = { t: 'eng', e: base + (dir > 0 ? 3 : 0) };
+  }
+  function dmsKey() {
+    if (showing()) { if (!extra) view = view.t === 'dms' ? { t: 'dec' } : { t: 'dms' }; return; }
+    prep('post', '°');
+    // ° then ′ then ″ depending on what this number already has
+    let mark = '°';
+    for (let i = cur.pos - 1; i >= 0; i--) {
+      const it = cur.seq[i]; if (it.k !== 't') break;
+      if (it.v === '°') { mark = "'"; break; }
+      if (it.v === "'") { mark = '"'; break; }
+      if (it.v === '"') break;
+      if (!/^[0-9.]$/.test(it.v)) break;
+    }
+    place(tok(mark === "'" ? '′' : mark === '"' ? '″' : '°', mark));
+  }
+  // FACT: only a positive integer of up to 10 digits
+  function factKey() {
+    if (!showing()) return;
+    if (view.t === 'fact') { view = { t: 'dec' }; return; }
+    if (extra || !isInt(lastShown) || lastShown < 1 || lastShown >= 1e10) { err = 'Math'; return; }
+    view = { t: 'fact' };
+  }
+
+  // =============== screens: menus, SETUP, CALC, SOLVE … ===============
+  const done = () => { screen = null; save(); };
+  // a list menu: paged (numbers restart on each page, ▲▼ turn pages) or one long list (▲▼ move the highlight)
+  function openList(items, opts = {}) {
+    screen = { t: 'list', items, paged: !!opts.paged, pg: 0, hi: 0, parent: screen && screen.t === 'list' ? screen : null };
+  }
+  const opt = (l, on, act) => ({ l, cur: on, act });
+  function setupMenu() {
+    const s = setup;
+    openList([
+      { l: 'Input/Output', act: () => openList([
+        opt('MathI/MathO', s.io === 'MM', () => setIO('MM')), opt('MathI/DecimalO', s.io === 'MD', () => setIO('MD')),
+        opt('LineI/LineO', s.io === 'LL', () => setIO('LL')), opt('LineI/DecimalO', s.io === 'LD', () => setIO('LD'))]) },
+      { l: 'Angle Unit', act: () => openList([opt('Degree', s.angle === 'DEG', () => { s.angle = 'DEG'; done(); }), opt('Radian', s.angle === 'RAD', () => { s.angle = 'RAD'; done(); }), opt('Gradian', s.angle === 'GRA', () => { s.angle = 'GRA'; done(); })]) },
+      { l: 'Number Format', act: () => openList([
+        opt('Fix', s.disp.t === 'fix', () => { screen = { t: 'prompt', text: 'Fix 0~9?', digit: d => { s.disp = { t: 'fix', n: d }; done(); } }; }),
+        opt('Sci', s.disp.t === 'sci', () => { screen = { t: 'prompt', text: 'Sci 0~9?', digit: d => { s.disp = { t: 'sci', n: d }; done(); } }; }),
+        opt('Norm', s.disp.t === 'norm', () => openList([opt('Norm 1', s.disp.t === 'norm' && s.disp.n === 1, () => { s.disp = { t: 'norm', n: 1 }; done(); }), opt('Norm 2', s.disp.t === 'norm' && s.disp.n === 2, () => { s.disp = { t: 'norm', n: 2 }; done(); })]))]) },
+      { l: 'Engineer Symbol', act: () => onOff(s.eng, v => { s.eng = v; }) },
+      { l: 'Fraction Result', act: () => openList([opt('ab/c', s.frac === 'abc', () => { s.frac = 'abc'; done(); }), opt('d/c', s.frac === 'dc', () => { s.frac = 'dc'; done(); })]) },
+      { l: 'Complex', act: () => openList([opt('a+bi', s.cplx === 'abi', () => { s.cplx = 'abi'; done(); }), opt('r∠θ', s.cplx === 'pol', () => { s.cplx = 'pol'; done(); })]) },
+      { l: 'Statistics', act: () => onOff(s.stat, v => { s.stat = v; }, 'Frequency?') },
+      { l: 'Spreadsheet', act: () => openList([
+        { l: 'Auto Calc', act: () => onOff(s.sAuto, v => { s.sAuto = v; }) },
+        { l: 'Show Cell', act: () => openList([opt('Formula', s.sShow === 'f', () => { s.sShow = 'f'; done(); }), opt('Value', s.sShow === 'v', () => { s.sShow = 'v'; done(); })]) }]) },
+      { l: 'Equation/Func', act: () => onOff(s.eqn, v => { s.eqn = v; }, 'Complex Roots') },
+      { l: 'Table', act: () => openList([opt('f(x)', s.table === 'f', () => { s.table = 'f'; done(); }), opt('f(x),g(x)', s.table === 'fg', () => { s.table = 'fg'; done(); })]) },
+      { l: 'Decimal Mark', act: () => openList([opt('Dot', s.dec === 'dot', () => { s.dec = 'dot'; done(); }), opt('Comma', s.dec === 'comma', () => { s.dec = 'comma'; done(); })]) },
+      { l: 'Digit Separator', act: () => onOff(s.sep, v => { s.sep = v; }) },
+      { l: 'MultiLine Font', act: () => openList([opt('Normal Font', s.font === 'n', () => { s.font = 'n'; done(); }), opt('Small Font', s.font === 's', () => { s.font = 's'; done(); })]) },
+      { l: 'QR Code', act: () => openList([opt('Version 3', s.qr === 3, () => { s.qr = 3; done(); }), opt('Version 11', s.qr === 11, () => { s.qr = 11; done(); })]) },
+      { l: 'Contrast', act: () => { screen = { t: 'contrast' }; } },
+    ], { paged: true });
+  }
+  function onOff(v, set) { openList([opt('On', v, () => { set(true); done(); }), opt('Off', !v, () => { set(false); done(); })]); }
+  // changing Input/Output clears the input and the calculation history, as on the real calculator
+  function setIO(io) { if (setup.io !== io) { setup.io = io; history = []; acAll(); ovr = false; undoSnap = null; } done(); }
+  function optnMenu() {
+    openList([
+      { l: 'Hyperbolic Func', act: () => openList([['sinh', 'sinh('], ['cosh', 'cosh('], ['tanh', 'tanh('], ['sinh⁻¹', 'asinh('], ['cosh⁻¹', 'acosh('], ['tanh⁻¹', 'atanh(']].map(([l, v]) => ({ l, act: () => { done(); insTok(l + '(', v); } }))) },
+      { l: 'Angle Unit', act: () => openList([['°', 'δ'], ['ʳ', 'ρ'], ['ᵍ', 'γ']].map(([l, v]) => ({ l, act: () => { done(); insTok(l, v, 'post'); } }))) },
+      { l: 'Engineer Symbol', act: () => openList(ENGS.map(([l], i) => ({ l, act: () => { done(); insTok(l, 'eg' + pad2(i + 1), 'post'); } }))) },
+    ]);
+  }
+  function constMenu() {
+    let n = 0;
+    openList(CONST_CATS.map(([name, list]) => {
+      const base = n; n += list.length;
+      return { l: name, act: () => openList(list.map(([t, h], i) => ({ l: `${h}`, act: () => { done(); insTok(t, 'k' + pad2(base + i + 1), 'start', `<span class="v">${h}</span>`); } }))) };
+    }), { paged: true });
+  }
+  function convMenu() {
+    let n = 0;
+    openList(CONV_CATS.map(([name, list]) => {
+      const base = n; n += list.length;
+      return { l: name, act: () => openList(list.map(([t], i) => ({ l: t, act: () => { done(); insTok(t, 'cv' + pad2(base + i + 1), 'post', `<span class="mk">${t}</span>`); } }))) };
+    }), { paged: true });
+  }
+  const confirm = (text, yes, no) => { screen = { t: 'confirm', text, yes, no }; };
+  const message = (lines) => { screen = { t: 'msg', lines }; };
+  function resetMenu() {
+    openList([
+      { l: 'Setup Data', act: () => confirm('Reset Setup Data?', () => { const c = setup.contrast; setup = DEF(); setup.contrast = c; history = []; acAll(); save(); message(['Reset Setup Data', '', 'Press [AC] key']); }) },
+      { l: 'Memory', act: () => confirm('Clear Memory?', () => { Object.assign(vars, VARS0()); ans = 0; lastShown = 0; acAll(); save(); message(['Clear Memory', '', 'Press [AC] key']); }) },
+      { l: 'Initialize All', act: () => confirm('Initialize All?', () => { const c = setup.contrast; setup = DEF(); setup.contrast = c; Object.assign(vars, VARS0()); ans = 0; history = []; acAll(); save(); message(['Initialize All', '', 'Press [AC] key']); }) },
+    ]);
+  }
+  const APPS = ['Calculate', 'Complex', 'Base-N', 'Matrix', 'Vector', 'Statistics', 'Distribution', 'Spreadsheet', 'Table', 'Equation/Func', 'Inequality', 'Ratio'];
+  const BADGE = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C'];
+  function pickApp(i) {
+    if (i === 0) { screen = null; acAll(); return; }
+    message([`${BADGE[i]}:${APPS[i]}`, 'Not available yet.', 'It comes in a later stage.', 'Press [AC] key']);
+  }
+
+  // ---- CALC: give the variables values, then work out the stored expression ----
+  // The variables are listed with their values; type a value and press = to move to the next one.
+  function program(allowEq) {
+    const out = [];
+    for (const st of statements(root)) {
+      if (!st.length) SE();
+      const q = st.findIndex(it => it.k === 't' && it.v === 'Q');
+      // "y = x²+x+3" stores the answer in y
+      if (q > 0 && allowEq === 'assign' && q === 1 && st[0].k === 't' && NAMEV[st[0].v]) { if (st.length < 3) SE(); const c = compile(comp(st.slice(2)), false); out.push({ to: NAMEV[st[0].v], ...c }); }
+      else out.push({ to: null, ...compile(comp(st), allowEq === 'solve') });
+    }
+    return out;
+  }
+  function startCalc() {
+    if (!root.length) return;
+    if (evaluated) { evaluated = false; err = null; extra = null; tag = ''; multi = null; }
+    let prog;
+    try { prog = program('assign'); } catch (e) { err = errOf(e); evaluated = true; errCur = e && e.slot ? { seq: e.slot, pos: 0 } : null; return; }
+    const names = [];
+    prog.forEach(p => p.used.forEach(L => { if (!names.includes(L)) names.push(L); }));
+    screen = { t: 'calc', prog, names, idx: 0, entry: null, phase: 'in' };
+    if (!names.length) runCalc();
+  }
+  function runCalc() {
+    const s = screen;
+    try {
+      extra = null; let v = 0;
+      for (const p of s.prog) { v = p.f(); if (p.to) vars[p.to] = v; }
+      ans = v; lastShown = v; s.phase = 'res'; s.err = null; s.v = v; s.extra = extra;
+      s.view = defaultView(v, statements(root).slice(-1)[0], extra);
+      save();
+    } catch (e) { s.phase = 'res'; s.err = errOf(e); }
+  }
+  // ---- SOLVE: Newton's method from the value in the variable, with a search for a sign change as a fallback ----
+  function startSolve() {
+    if (!root.length) return;
+    if (evaluated) { evaluated = false; err = null; extra = null; tag = ''; multi = null; }
+    if (statements(root).length > 1) { err = 'Syntax'; evaluated = true; return; }
+    let c;
+    try { [c] = program('solve'); } catch (e) { err = errOf(e); evaluated = true; errCur = e && e.slot ? { seq: e.slot, pos: 0 } : null; return; }
+    if (!c.used.length) { err = 'Variable'; evaluated = true; return; }
+    const names = c.used.includes('x') ? ['x', ...c.used.filter(L => L !== 'x')] : c.used.slice();
+    const g = c.g ? (() => { const L = c.f, R = c.g; return () => L() - R(); })() : c.f;
+    screen = { t: 'solve', g, Lf: c.f, Rf: c.g || (() => 0), names, idx: 0, target: 0, entry: null, phase: 'in' };
+  }
+  function solveNow(again) {
+    const s = screen, L = s.names[s.target];
+    const start = again ? s.contX : vars[L];
+    const val = (fn, x) => { vars[L] = x; const r = fn(); return Number.isFinite(r) ? r : null; };
+    const ok = x => { try { return val(s.g, x); } catch (e) { return null; } };
+    // a root: L−R is zero compared with the size of the two sides (a pole, where L−R changes sign by jumping, is not)
+    const isRoot = x => {
+      if (x === null || !Number.isFinite(x) || Math.abs(x) >= 1e50) return false;
+      try {
+        const l = val(s.Lf, x), r = val(s.Rf, x); if (l === null || r === null) return false;
+        return Math.abs(l - r) <= 1e-10 * Math.max(1, Math.abs(l), Math.abs(r));
+      } catch (e) { return false; }
+    };
+    const newton = x0 => {
+      let x = x0;
+      for (let i = 0; i < 150; i++) {
+        const fx = ok(x); if (fx === null) return { x: null };
+        if (fx === 0) return { x };
+        const h = Math.max(Math.abs(x), 1) * 1e-7, a = ok(x + h), b = ok(x - h);
+        if (a === null || b === null) return { x: null };
+        const d = (a - b) / (2 * h);
+        if (!d || !Number.isFinite(d)) return { x: null };
+        const nx = x - fx / d;
+        if (!Number.isFinite(nx)) return { x: null };
+        if (Math.abs(nx - x) <= 1e-14 * Math.max(1, Math.abs(nx))) return { x: nx };
+        x = nx;
+      }
+      return { x: null, limit: x };   // still moving after all the steps: the calculator asks "Continue"
+    };
+    let found = null;
+    const n0 = newton(start);
+    if (isRoot(n0.x)) found = n0.x;
+    else {
+      // look for a sign change between sample points spread out around the start value (and towards 0),
+      // nearest first, then narrow it down and polish it with Newton
+      const w = Math.max(1, Math.abs(start)), pts = new Set([start, 0]);
+      for (let k = -8; k <= 34; k++) { pts.add(start + w * 2 ** k); pts.add(start - w * 2 ** k); }
+      for (let k = 1; k <= 60; k++) { pts.add(start / 2 ** k); pts.add(-start / 2 ** k); }
+      const xs = [...pts].sort((a, b) => a - b).map(x => ({ x, y: ok(x) })).filter(p => p.y !== null);
+      const pairs = [];
+      for (let i = 1; i < xs.length; i++) if (Math.sign(xs[i - 1].y) !== Math.sign(xs[i].y)) pairs.push([xs[i - 1], xs[i]]);
+      pairs.sort((p, q) => Math.abs((p[0].x + p[1].x) / 2 - start) - Math.abs((q[0].x + q[1].x) / 2 - start));
+      for (const [P, Q] of pairs) {
+        if (P.y === 0 && isRoot(P.x)) { found = P.x; break; }
+        let a = P.x, b = Q.x, fa = P.y;
+        for (let i = 0; i < 200 && a !== b; i++) { const m = (a + b) / 2; if (m === a || m === b) break; const fm = ok(m); if (fm === null) break; if (fm === 0) { a = b = m; break; } if (Math.sign(fm) === Math.sign(fa)) { a = m; fa = fm; } else b = m; }
+        const polished = newton((a + b) / 2).x;
+        const cand = isRoot(polished) ? polished : (a + b) / 2;
+        if (isRoot(cand)) { found = cand; break; }
+      }
+    }
+    if (found === null) {
+      vars[L] = start;
+      if (n0.limit != null) { s.phase = 'cont'; s.contX = n0.limit; return; }
+      s.phase = 'err'; s.err = 'Cannot Solve'; return;
+    }
+    const x = Math.abs(found) < 1e-13 ? 0 : found;
+    let lr = ok(x);
+    if (lr === null || isRoot(x) && Math.abs(lr) <= 1e-13 * Math.max(1, Math.abs(val(s.Lf, x)))) lr = 0;
+    vars[L] = x; s.phase = 'res'; s.res = { L, v: x, lr }; save();
+  }
+  // value entry on the CALC / SOLVE screens (typed in one line)
+  const ENTRY = {
+    n: { dot: ['.', '.'], neg: ['−', '~'], plus: ['+', '+'], minus: ['−', '-'], times: ['×', '*'], div: ['÷', '/'], lpar: ['(', '('], rpar: [')', ')'], e10: ['ᴇ', 'E'], ans: ['Ans', 'ans'], frac: ['⌟', 'J'], sqrt: ['√(', 'sqrt('], sq: ['²', '^(2)'], pow: ['^(', '^('], inv: ['⁻¹', 'I'], sin: ['sin(', 'sin('], cos: ['cos(', 'cos('], tan: ['tan(', 'tan('], ln: ['ln(', 'ln('] },
+    s: { e10: ['π', 'pi'], neg: ['log(', 'log('], ans: ['%', '%'], rpar: [',', ','] },
+    a: { e10: ['e', 'e'], neg: ['A', 'va'], dms: ['B', 'vb'], inv: ['C', 'vc'], sin: ['D', 'vd'], cos: ['E', 've'], tan: ['F', 'vf'], mplus: ['M', 'mem'], rpar: ['x', 'vx'], sd: ['y', 'vy'] },
+  };
+  function entryKey(s, k, m) {
+    if (k.id === 'del') { if (s.entry && s.entry.length) s.entry.pop(); return true; }
+    let t = null;
+    if (k.dig != null && !m) t = [String(k.dig), String(k.dig)];
+    else if (k.id === 'xv' && !m) t = ['x', 'vx'];
+    else t = (ENTRY[m || 'n'] || {})[k.id] || null;
+    if (!t) return false;
+    if (!s.entry) s.entry = [];
+    s.entry.push(t);
+    return true;
+  }
+  function commitEntry(s) {
+    if (!s.entry || !s.entry.length) { s.entry = null; return true; }
+    try {
+      const c = compile(s.entry.map(([, v]) => /^[a-z]/.test(v) ? ' ' + v : v).join(''), false);
+      vars[s.names[s.idx]] = c.f(); s.entry = null; save(); return true;
+    } catch (e) { s.entryErr = errOf(e); return false; }
+  }
+
+  function screenKey(k, m) {
+    const s = screen;
+    if (s.t === 'msg') { if (k.id === 'ac') screen = null; return; }
+    if (s.t === 'confirm') { if (k.id === 'eq') { screen = null; s.yes(); } else if (k.id === 'ac') { screen = null; if (s.no) s.no(); } return; }
+    if (s.t === 'hist') {
+      if (k.id === 'ac') { screen = null; return; }
+      if (k.id === 'eq' && !m) recallHist(s.hi);
+      return;
+    }
+    if (s.t === 'prompt') { if (k.id === 'ac') screen = null; else if (k.dig != null && !m) s.digit(k.dig); return; }
+    if (s.t === 'contrast') { if (k.id === 'ac') done(); return; }
+    if (s.t === 'recall') {
+      if (k.id === 'ac') { screen = null; return; }
+      const L = k.v || (k.id === 'xv' ? 'x' : null);
+      if (L && !m) { screen = null; insTok(L, VARN[L], 'start', L === 'x' || L === 'y' ? `<span class="v">${L}</span>` : undefined); }
+      return;
+    }
+    if (s.t === 'main') {
+      if (k.id === 'ac') { screen = null; return; }
+      if (k.id === 'eq') { pickApp(s.hi); return; }
+      if (m) return;
+      if (k.dig >= 1) { pickApp(k.dig - 1); return; }
+      if (k.app != null) pickApp(k.app);
+      return;
+    }
+    if (s.t === 'list') {
+      if (k.id === 'ac') { screen = null; return; }
+      if (k.id === 'eq' && !s.paged) { pick(s, s.hi); return; }
+      if (k.dig >= 1 && !m) { const i = s.paged ? s.pg * 4 + k.dig - 1 : k.dig - 1; if (i < s.items.length && (!s.paged || k.dig <= 4)) pick(s, i); }
+      return;
+    }
+    if (s.t === 'calc') {
+      if (k.id === 'ac') { screen = null; return; }
+      if (s.phase === 'res') { if ((k.id === 'eq' && !m) || (k.id === 'calc' && !m)) { s.phase = 'in'; s.idx = 0; s.entry = null; s.err = null; if (!s.names.length) runCalc(); } return; }
+      if (s.entryErr) { if (k.id === 'del' || k.id === 'eq') s.entryErr = null; return; }
+      if (k.id === 'eq' && !m) {
+        const typed = !!(s.entry && s.entry.length);
+        if (!commitEntry(s)) return;
+        if (s.idx < s.names.length - 1) s.idx++; else if (!typed) runCalc();
+        return;
+      }
+      entryKey(s, k, m);
+      return;
+    }
+    if (s.t === 'solve') {
+      if (k.id === 'ac') { screen = null; return; }
+      if (s.phase === 'cont') { if (k.id === 'eq' && !m) solveNow(true); return; }
+      if (s.phase === 'res' || s.phase === 'err') { if (k.id === 'eq' && !m) { s.phase = 'in'; s.idx = s.target; s.entry = null; } return; }
+      if (s.entryErr) { if (k.id === 'del' || k.id === 'eq') s.entryErr = null; return; }
+      if (k.id === 'eq' && !m) {
+        const typed = !!(s.entry && s.entry.length);
+        if (!commitEntry(s)) return;
+        // = on the variable to solve for (or on any row without typing) solves; otherwise it stores and moves on
+        if (typed) { if (s.idx < s.names.length - 1) s.idx++; return; }
+        s.target = s.idx; solveNow();
+        return;
+      }
+      entryKey(s, k, m);
+    }
+  }
+  function pick(s, i) {
+    const it = s.items[i]; if (!it) return;
+    const before = screen;
+    it.act();
+    if (screen === before) done();
+  }
+  function screenNav(dir) {
+    const s = screen;
+    if (s.t === 'list') {
+      if (dir === 'L') { if (s.parent) screen = s.parent; return; }
+      if (dir === 'R') return;
+      const d = dir === 'U' ? -1 : 1;
+      if (s.paged) { const n = Math.ceil(s.items.length / 4); s.pg = (s.pg + d + n) % n; }
+      else s.hi = (s.hi + d + s.items.length) % s.items.length;
+      return;
+    }
+    if (s.t === 'main') { const d = { L: -1, R: 1, U: -4, D: 4 }[dir]; s.hi = (s.hi + d + 12) % 12; return; }
+    if (s.t === 'hist') {
+      if ((dir === 'U' || dir === 'D') && history.length) { s.hi = Math.min(history.length - 1, Math.max(0, s.hi + (dir === 'U' ? -1 : 1))); s.reveal = true; }
+      return;
+    }
+    if (s.t === 'contrast') { if (dir === 'L') setup.contrast = Math.max(1, setup.contrast - 1); if (dir === 'R') setup.contrast = Math.min(9, setup.contrast + 1); save(); return; }
+    if ((s.t === 'calc' || s.t === 'solve') && s.phase === 'in' && !s.entryErr) {
+      if (dir === 'U' || dir === 'D') { s.entry = null; s.idx = (s.idx + (dir === 'U' ? -1 : 1) + s.names.length) % s.names.length; }
+      return;
+    }
+    if (s.t === 'solve' && s.phase === 'err' && (dir === 'L' || dir === 'R')) { s.phase = 'in'; s.idx = s.target; }
+  }
+
+  // =============== keys ===============
+  const T = (d, v, kind, h) => () => insTok(d, v, kind, h);
+  const L1 = (line, nat) => () => (isLine() ? line() : nat());
+  const box = '<span class="cap-box"></span>', boxF = '<span class="cap-box f"></span>', boxS = '<span class="cap-box s"></span>';
+  const vx = '<span class="v">x</span>';
+  const ins = (d, v, kind) => () => insTok(d, v, kind);
+  const powTpl = n => () => isLine() ? insTok(n === 2 ? '²' : '³', `^(${n})`, 'post') : insTpl('pow', [[tok(String(n), String(n))]], 'after', 'post');
+  const varTok = L => () => insTok(L, VARN[L], 'start', L === 'x' || L === 'y' ? `<span class="v">${L}</span>` : undefined);
+  const lab = (...parts) => parts.map(([c, h]) => `<span class="${c}">${h}</span>`).join('');
+  const AF = (L, sh) => lab(['s', sh], ['a', L]);
+
+  const TOP = [
+    { id: 'shift', cls: 'r', cap: 'S', idn: 'kShift', lab: lab(['s', 'SHIFT']), aria: 'SHIFT' },
+    { id: 'alpha', cls: 'r', cap: 'A', idn: 'kAlpha', lab: lab(['a', 'ALPHA']), aria: 'ALPHA' },
+    { id: 'menu', cls: 'r', lab: lab(['w', 'MENU'], ['s', 'SETUP']), aria: 'MENU; shift: SETUP', a: () => { screen = { t: 'main', hi: 0 }; }, s: setupMenu },
+    { id: 'on', cls: 'r', lab: lab(['w', 'ON']), aria: 'ON' },
+    { id: 'optn', cls: 'f', cap: 'OPTN', lab: lab(['s', 'QR']), a: optnMenu, s: () => message(['QR Code', 'QR codes are not', 'available here.', 'Press [AC] key']) },
+    { id: 'calc', cls: 'f', cap: 'CALC', lab: lab(['s', 'SOLVE'], ['a', '=']), a: startCalc, s: startSolve, al: T('=', 'Q', 'op') },
+    { id: 'integ', cls: 'f', cap: `∫${boxS}<sup>${boxS}</sup>`, aria: 'integral; shift: d/dx; alpha: colon', lab: lab(['s', 'd/dx'], ['a', ':']),
+      a: L1(T('∫(', 'integ('), () => insTpl('integ', [[], [], []], 0, 'start', 0)), s: L1(T('d/dx(', 'deriv('), () => insTpl('deriv', [[], []], 0, 'start', 0)), al: T(':', ':', 'op') },
+    { id: 'xv', cls: 'f', cap: vx, aria: 'x; shift: sum', lab: lab(['s', 'Σ']), a: varTok('x'), s: L1(T('Σ(', 'sigma('), () => insTpl('sigma', [[], [], []], 0, 'start', 0)), v: 'x' },
+  ];
+  const FN = [
+    { id: 'frac', cap: '<span class="cap-frac"><i></i><b></b><i></i></span>', aria: 'fraction; shift: mixed fraction', lab: lab(['s', `${boxF}<sup>${box}</sup>⁄${box}`]), a: () => insFrac('frac'), s: () => insFrac('mixed') },
+    { id: 'sqrt', cap: `√${boxF}`, aria: 'square root; shift: cube root', lab: lab(['s', `∛${boxF}`]), a: L1(T('√(', 'sqrt('), () => insTpl('sqrt', [[]], 0, 'start', 0)), s: L1(T('∛(', 'cbrt('), () => insTpl('cbrt', [[]], 0, 'start', 0)) },
+    { id: 'sq', cap: `${vx}<sup>2</sup>`, aria: 'x squared; shift: x cubed', lab: lab(['s', `<span class="v">x</span><sup>3</sup>`], ['b', 'DEC']), a: powTpl(2), s: powTpl(3) },
+    { id: 'pow', cap: `${vx}<sup>${boxF}</sup>`, aria: 'power; shift: x-th root', lab: lab(['s', `${boxF}√${box}`], ['b', 'HEX']), a: L1(T('^(', '^(', 'post'), () => insTpl('pow', [[]], 0, 'post')), s: L1(T('ˣ√(', 'X(', 'post'), () => insTpl('root', [[], []], 0, 'start', 1)) },
+    { id: 'logb', cap: `log${boxS}${box}`, aria: 'log with base; shift: 10 to the power', lab: lab(['s', `10<sup>${boxF}</sup>`], ['b', 'BIN']), a: L1(T('log(', 'log('), () => insTpl('logb', [[], []], 0, 'start', 1)), s: L1(() => { insTok('10', '(10)'); insTok('^(', '^(', 'post'); }, () => { insTok('10', '(10)'); insTpl('pow', [[]], 0, 'post', 0); }) },
+    { id: 'ln', cap: 'ln', aria: 'natural log; shift: e to the power', lab: lab(['s', `<span class="v">e</span><sup>${boxF}</sup>`], ['b', 'OCT']), a: T('ln(', 'ln('), s: L1(() => { insTok('e', 'e', 'start', '<span class="v">e</span>'); insTok('^(', '^(', 'post'); }, () => { insTok('e', 'e', 'start', '<span class="v">e</span>'); insTpl('pow', [[]], 0, 'post', 0); }) },
+
+    { id: 'neg', cap: '(−)', aria: 'negative; shift: log; alpha: A', lab: AF('A', 'log'), a: T('−', '~'), s: T('log(', 'log('), al: varTok('A'), v: 'A', app: 9 },
+    { id: 'dms', cap: '°′″', aria: 'degrees minutes seconds; shift: FACT; alpha: B', lab: AF('B', 'FACT'), a: dmsKey, s: factKey, al: varTok('B'), v: 'B', app: 10 },
+    { id: 'inv', cap: `${vx}<sup>−1</sup>`, aria: 'reciprocal; shift: factorial; alpha: C', lab: AF('C', `<span class="v">x</span>!`), a: T('⁻¹', 'I', 'post'), s: T('!', '!', 'post'), al: varTok('C'), v: 'C', app: 11 },
+    { id: 'sin', cap: 'sin', aria: 'sin; shift: arcsin; alpha: D', lab: AF('D', 'sin<sup>−1</sup>'), a: T('sin(', 'sin('), s: T('sin⁻¹(', 'asin('), al: varTok('D'), v: 'D' },
+    { id: 'cos', cap: 'cos', aria: 'cos; shift: arccos; alpha: E', lab: AF('E', 'cos<sup>−1</sup>'), a: T('cos(', 'cos('), s: T('cos⁻¹(', 'acos('), al: varTok('E'), v: 'E' },
+    { id: 'tan', cap: 'tan', aria: 'tan; shift: arctan; alpha: F', lab: AF('F', 'tan<sup>−1</sup>'), a: T('tan(', 'tan('), s: T('tan⁻¹(', 'atan('), al: varTok('F'), v: 'F' },
+
+    { id: 'sto', cap: 'STO', aria: 'STO; shift: RECALL', lab: lab(['s', 'RECALL']), a: () => { sto = true; }, s: () => { screen = { t: 'recall' }; } },
+    { id: 'eng', cap: 'ENG', aria: 'ENG; shift: engineering left', lab: lab(['p', '∠'], ['s', '←'], ['p', '<span class="v">i</span>']), a: () => engKey(-1), s: () => engKey(1) },
+    { id: 'lpar', cap: '(', aria: 'open bracket; shift: Abs', lab: lab(['s', 'Abs']), a: T('(', '('), s: L1(T('Abs(', 'abs('), () => insTpl('abs', [[]], 0, 'start', 0)) },
+    { id: 'rpar', cap: ')', aria: 'close bracket; shift: comma; alpha: x', lab: lab(['s', ','], ['a', '<span class="v">x</span>']), a: T(')', ')', 'post'), s: T(',', ','), al: varTok('x'), v: 'x' },
+    { id: 'sd', cap: 'S⇔D', aria: 'fraction or decimal; shift: mixed or improper; alpha: y', lab: lab(['s', 'a<sup>b</sup>⁄<sub>c</sub>⇔<sup>d</sup>⁄<sub>c</sub>'], ['a', '<span class="v">y</span>']), a: sdKey, s: mixedKey, al: varTok('y'), v: 'y' },
+    { id: 'mplus', cap: 'M+', aria: 'M plus; shift: M minus; alpha: M', lab: lab(['s', 'M−'], ['a', 'M']), a: () => memAdd(1), s: () => memAdd(-1), al: varTok('M'), v: 'M' },
+  ];
+  const D = (n, s, sl) => ({ id: 'd' + n, cls: 'n', cap: String(n), dig: n, key: String(n), a: T(String(n), String(n), 'num'), s, lab: sl ? lab(['s', sl]) : '' });
+  const NUM = [
+    D(7, constMenu, 'CONST'), D(8, convMenu, 'CONV'), D(9, resetMenu, 'RESET'),
+    { id: 'del', cls: 'b', cap: 'DEL', aria: 'DEL; shift: INS; alpha: UNDO', lab: lab(['s', 'INS'], ['a', 'UNDO']), a: del, s: () => { if (isLine()) ovr = !ovr; else insArg = !insArg; }, al: doUndo, key: 'Backspace' },
+    { id: 'ac', cls: 'b', cap: 'AC', aria: 'AC; shift: OFF', lab: lab(['s', 'OFF']), a: acAll, key: 'Escape' },
+    D(4), D(5), D(6),
+    { id: 'times', cls: 'n', cap: '×', aria: 'times; shift: nPr', lab: lab(['s', 'nPr']), a: T('×', '*', 'op'), s: T('P', 'P', 'op'), key: '*' },
+    { id: 'div', cls: 'n', cap: '÷', aria: 'divide; shift: nCr', lab: lab(['s', 'nCr']), a: T('÷', '/', 'op'), s: T('C', 'C', 'op'), key: '/' },
+    D(1), D(2), D(3),
+    { id: 'plus', cls: 'n', cap: '+', aria: 'plus; shift: Pol', lab: lab(['s', 'Pol']), a: T('+', '+', 'op'), s: T('Pol(', 'pol('), key: '+' },
+    { id: 'minus', cls: 'n', cap: '−', aria: 'minus; shift: Rec', lab: lab(['s', 'Rec']), a: T('−', '-', 'op'), s: T('Rec(', 'rec('), key: '-' },
+    { ...D(0, T('Rnd(', 'rnd('), 'Rnd'), cls: 'n zero' },
+    { id: 'dot', cls: 'n', cap: '•', aria: 'decimal point; shift: Ran#; alpha: RanInt', lab: lab(['s', 'Ran#'], ['a', 'RanInt']), a: T('.', '.', 'num'), s: T('Ran#', 'ran'), al: T('RanInt#(', 'ranint('), key: '.' },
+    { id: 'e10', cls: 'n t', cap: '×10<sup><span class="v">x</span></sup>', aria: 'times ten to the power; shift: pi; alpha: e', lab: lab(['s', 'π'], ['a', '<span class="v">e</span>']), a: L1(T('ᴇ', 'E', 'start'), () => insTpl('e10', [[]], 0, 'start')), s: T('π', 'pi'), al: T('e', 'e', 'start', '<span class="v">e</span>') },
+    { id: 'ans', cls: 'n t', cap: 'Ans', aria: 'Ans; shift: percent', lab: lab(['s', '%']), a: T('Ans', 'ans'), s: T('%', '%', 'post') },
+    { id: 'eq', cls: 'n eq', cap: '=', aria: 'equals; shift: approximately', lab: lab(['s', '≈']), a: () => doEval(false), s: () => doEval(true), key: 'Enter' },
+  ];
+  [...TOP, ...FN].forEach(k => { if (!k.cls) k.cls = 'f'; });
+
+  const $ = id => document.getElementById(id);
+  const keyMap = {};
+  // keys act the moment a finger (or mouse) goes down, like a real keypad, so fast or two-thumb typing
+  // never loses a press (a "click" is dropped when fingers overlap or slide). click stays for keyboard
+  // and screen-reader activation, and is ignored right after a pointer press so nothing counts twice.
+  function onPress(b, fn) {
+    let downAt = -1e9;
+    b.addEventListener('pointerdown', e => { if (e.button !== 0) return; downAt = performance.now(); flash(b); fn(); });
+    b.addEventListener('click', () => { if (performance.now() - downAt > 1000) fn(); });
+  }
+  function build(container, list) {
+    list.forEach(k => {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const lb = document.createElement('div');
+      lb.innerHTML = k.lab || '';
+      lb.className = 'lab' + (k.cls === 'r' || lb.children.length < 2 ? ' c' : '');
+      const b = document.createElement('button'); b.type = 'button';
+      b.className = 'k ' + k.cls; b.innerHTML = k.cap || '';
+      b.dataset.k = k.id;
+      if (k.idn) b.id = k.idn;
+      const plain = h => { const t = document.createElement('span'); t.innerHTML = h; return t.textContent; };
+      b.setAttribute('aria-label', k.aria || plain(k.cap) + (k.lab ? `; shift: ${plain(k.lab)}` : ''));
+      onPress(b, () => press(k));
+      cell.append(lb, b); container.append(cell);
+      k.btn = b;
+      if (k.key) keyMap[k.key] = k;
+    });
+  }
+  function buildTop() {
+    const top = $('top');
+    const [shiftK, alphaK, menuK, onK, optnK, calcK, integK, xK] = TOP;
+    build(top, [shiftK, alphaK]);
+    const d = document.createElement('div'); d.className = 'dpad';
+    [['up', '▲', 'Up', 'U'], ['dn', '▼', 'Down', 'D'], ['lf', '◀', 'Left', 'L'], ['rg', '▶', 'Right', 'R']].forEach(([c, t, l, dir]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = c; b.innerHTML = `<span aria-hidden="true">${t}</span>`; b.setAttribute('aria-label', l); b.dataset.k = 'nav' + dir;
+      onPress(b, () => pressNav(dir)); d.append(b);
+    });
+    const hub = document.createElement('span'); hub.className = 'hub'; d.append(hub);
+    top.append(d);
+    build(top, [menuK, onK, optnK, calcK, integK, xK]);
+  }
+
+  // which keys are allowed on the error screen: AC, ON, DEL and the arrows (handled in pressNav)
+  function press(k) {
+    if (k.id === 'shift') { if (!off) { shift = !shift; alpha = false; } render(); return; }
+    if (k.id === 'alpha') { if (!off) { alpha = !alpha; shift = false; } render(); return; }
+    if (off) { if (k.id === 'on') powerOn(); render(); return; }
+    const m = shift ? 's' : alpha ? 'a' : '';
+    shift = alpha = false;
+    if (k.id === 'on') { powerOn(); render(); return; }
+    if (k.id === 'ac' && m === 's') { acAll(); off = true; render(); return; }
+    if (screen) { screenKey(k, m); render(); return; }
+    if (sto) {
+      sto = false;
+      const L = m === 's' ? null : (k.v || null);
+      if (L) doSto(L); else if (k.id === 'ac') acAll();
+      render(); return;
+    }
+    if (err) { if (k.id === 'ac') acAll(); else if (k.id === 'del' && !m) enterEdit(false); render(); return; }
+    const fn = m === 's' ? k.s : m === 'a' ? k.al : k.a;
+    if (!fn) { render(); return; }
+    const hadIns = insArg;
+    const before = k.id === 'del' && m === 'a' ? null : snap();
+    fn();
+    if (before && JSON.stringify(before.root) !== JSON.stringify(root)) undoSnap = before;
+    if (hadIns && !(k.id === 'del' && m === 's')) insArg = false;   // INS only applies to the next key
+    render();
+  }
+  function pressNav(dir) {
+    if (off) return;
+    const m = shift;
+    shift = alpha = false; sto = false;
+    if (screen) { screenNav(dir); render(); return; }
+    if (err) { if (dir === 'L' || dir === 'R') enterEdit(false); render(); return; }
+    if (m && (dir === 'L' || dir === 'R')) jumpOut(dir === 'R' ? 1 : -1);
+    else ({ L: left, R: right, U: () => vert(-1), D: () => vert(1) })[dir]();
+    insArg = false;
+    render();
+  }
+  // ON clears the calculation history and the input; memory and settings stay
+  function powerOn() { off = false; shift = alpha = false; acAll(); history = []; save(); }
+
+  // =============== render ===============
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const CUR = () => `<span class="cur${ovr && isLine() ? ' ovr' : ''}"></span>`;
+  let slotRefs = [];
+  const ITAL = new Set(['vx', 'vy', 'e']);
+  function seqHTML(seq, showCur, reg) {
+    const here = showCur && cur.seq === seq;
+    const at = reg ? (s => i => ` data-s="${s}" data-i="${i}"`)(reg.push(seq) - 1) : () => '';
+    if (!seq.length) return `<span class="box${here ? ' act' : ''}"${at(0)} data-empty>${here ? CUR() : ''}</span>`;
+    let h = '';
+    seq.forEach((it, i) => { if (here && cur.pos === i) h += CUR(); h += itemHTML(it, showCur, reg, at(i)); });
+    if (here && cur.pos === seq.length) h += CUR();
+    return h;
+  }
+  function itemHTML(it, sc, reg, at = '') {
+    const S = i => seqHTML(it.s[i], sc, reg);
+    const wrap = h => `<span${at}>${h}</span>`;
+    switch (it.k) {
+      case 't': {
+        if (it.h) return wrap(it.h);
+        if (ITAL.has(it.v)) return wrap(`<span class="v">${esc(it.d)}</span>`);
+        if (it.v === 'Q') return wrap('=');
+        if (/^[°′″ʳᵍ⁻¹²³]/.test(it.d)) return `<span class="mk"${at}>${esc(it.d)}</span>`;
+        return wrap(esc(it.d));
+      }
+      case 'frac': return wrap(`<span class="frac"><span class="n">${S(0)}</span><span class="d">${S(1)}</span></span>`);
+      case 'mixed': return wrap(`${S(0)}<span class="frac"><span class="n">${S(1)}</span><span class="d">${S(2)}</span></span>`);
+      case 'pow': return wrap(`<span class="pw">${S(0)}</span>`);
+      case 'e10': return wrap(`<span class="lt">×10</span><span class="pw">${S(0)}</span>`);
+      case 'sqrt': return wrap(`<span class="rt"><span class="rs">√</span><span class="rb">${S(0)}</span></span>`);
+      case 'cbrt': return wrap(`<span class="ri">3</span><span class="rt"><span class="rs">√</span><span class="rb">${S(0)}</span></span>`);
+      case 'root': return wrap(`<span class="ri">${S(0)}</span><span class="rt"><span class="rs">√</span><span class="rb">${S(1)}</span></span>`);
+      case 'logb': return wrap(`log<span class="sb2">${S(0)}</span>(${S(1)})`);
+      case 'abs': return wrap(`|${S(0)}|`);
+      case 'integ': return wrap(`<span class="big"><span class="sym">∫</span><span class="lims"><span>${S(2)}</span><span>${S(1)}</span></span></span>${S(0)}<span class="lt">d<span class="v">x</span></span>`);
+      case 'deriv': return wrap(`<span class="ddx"><span>d</span><span>d<span class="v">x</span></span></span>(${S(0)})<span class="at">|<span class="v">x</span>=${S(1)}</span>`);
+      case 'sigma': return wrap(`<span class="sig"><span class="hi">${S(2)}</span><span class="sym">Σ</span><span class="lo"><span class="v">x</span>=${S(1)}</span></span>(${S(0)})`);
+    }
+    return '';
+  }
+  function placeCursorAt(x, y) {
+    const ex = $('expr'); if (!ex) return;
+    let best = null;
+    ex.querySelectorAll('[data-s]').forEach(el => {
+      const r = el.getBoundingClientRect(), s = +el.dataset.s, i = +el.dataset.i;
+      const dy = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+      const gaps = el.hasAttribute('data-empty') ? [[i, (r.left + r.right) / 2]] : [[i, r.left], [i + 1, r.right]];
+      gaps.forEach(([pos, gx]) => { const score = Math.abs(x - gx) + 3 * dy; if (!best || score < best.score) best = { score, seq: slotRefs[s], pos }; });
+    });
+    if (!best) return;
+    if (evaluated || err) { evaluated = false; err = null; view = { t: 'dec' }; extra = null; tag = ''; multi = null; }
+    shift = alpha = sto = insArg = false; histIdx = -1; draft = null;
+    cur = { seq: best.seq, pos: best.pos };
+    render();
+  }
+  function valueHTML(v, vw) {
+    const line = isLine();
+    switch (vw.t) {
+      case 'exact': {
+        const f = vw.form;
+        if (f.t === 'frac') return fracHTML(f.f, vw.mixed && !!fracFits(v, true), line);
+        if (f.t === 'surd') return surdHTML(f.s);
+        if (f.t === 'pi') return piHTML(f.f);
+        break;
+      }
+      case 'dms': return dmsHTML(v);
+      case 'fact': return factHTML(v);
+      case 'eng': return engHTML(v, vw.e);
+    }
+    return fmt(v);
+  }
+  const pairHTML = e => `<span class="sm">${e.a[0]}=${fmt(e.a[1])}${setup.dec === 'comma' ? ';' : ','} ${e.b[0]}=${fmt(e.b[1])}</span>`;
+  function resultHTML() {
+    if (extra && extra.t === 'pair') return pairHTML(extra);
+    return valueHTML(lastShown, view);
+  }
+  const histResultHTML = h => h.extra ? pairHTML(h.extra) : valueHTML(h.r, defaultView(h.r, statements(h.root).slice(-1)[0], h.extra));
+  const ERRTXT = { Syntax: 'Syntax ERROR', Math: 'Math ERROR', Stack: 'Stack ERROR', Argument: 'Argument ERROR', Time: 'Time Out', Variable: 'Variable ERROR' };
+  const errHTML = (kind, goto = true) => `<div class="err"><b>${ERRTXT[kind] || kind}</b>[AC] :Cancel${goto ? '<br>[◀][▶]:Goto' : ''}</div>`;
+  function calcHTML() {
+    if (err) return errHTML(err);
+    const editing = !evaluated;
+    slotRefs = [];
+    let line = root.length || editing ? seqHTML(root, editing, slotRefs) : '';
+    if (!root.length && editing) line = CUR();
+    if (evaluated && tag) line += `<span class="tag">${esc(tag)}</span>`;
+    const input = `<div class="inwrap"><div class="in" id="expr"><span class="line">${line}</span></div><i class="more l" id="mL" hidden>◀</i><i class="more r" id="mR" hidden>▶</i></div>`;
+    const out = `<div class="out" id="res">${evaluated ? resultHTML() : ''}</div>`;
+    if (!isLine()) return input + out;
+    // Line display: earlier calculations stay above the current one (4 lines, or 6 with Small Font)
+    const room = (setup.font === 's' ? 6 : 4) - (evaluated ? 2 : 1), skip = evaluated ? (histIdx === 0 ? 1 : null) : 0, older = [];
+    if (skip !== null) for (const h of history.slice(skip)) {
+      if (older.length < room) older.unshift(`<div class="lr">${histResultHTML(h)}</div>`);
+      if (older.length < room) older.unshift(`<div class="ll">${seqHTML(h.root, false)}</div>`);
+      if (older.length >= room) break;
+    }
+    return `<div class="older">${older.join('')}</div>${input}${evaluated ? out : ''}`;
+  }
+  const SVGI = [
+    '<text x="7" y="10">×÷</text><text x="7" y="21">+−</text>',
+    '<text x="5" y="15">i</text><path d="M14 17h12M14 17l9-9"/>',
+    '<text x="4" y="10">2 8</text><text x="2" y="21">10 16</text>',
+    '<path d="M6 3H3v16h3M28 3h3v16h-3"/><path d="M10 7h3M20 7h3M10 15h3M20 15h3"/>',
+    '<path d="M4 18L28 5M28 5h-6M28 5l-2 5"/>',
+    '<path d="M4 20V12h5v8M11 20V5h5v15M18 20V9h5v11M25 20v-6h4v6"/>',
+    '<path d="M2 19c6 0 7-15 14-15s8 15 14 15"/>',
+    '<path d="M3 3h28v17H3zM3 9h28M3 15h28M12 3v17M22 3v17"/>',
+    '<path d="M6 3h22v17H6zM17 3v17M6 8h22"/>',
+    '<text x="4" y="10">x y</text><text x="4" y="21">=0</text>',
+    '<text x="4" y="10">x y</text><text x="4" y="21">&gt;0</text>',
+    '<path d="M4 6h8v10H4zM22 6h8v10h-8z"/><text x="14" y="15">:</text>',
+  ];
+  function mainHTML(s) {
+    const row0 = Math.min(Math.max(0, Math.floor(s.hi / 4) - 1), 1);
+    const icons = APPS.slice(row0 * 4, row0 * 4 + 8).map((n, j) => { const i = row0 * 4 + j; return `<button type="button" class="app${i === s.hi ? ' hi' : ''}" data-app="${i}" aria-label="${n}"><svg viewBox="0 0 34 24">${SVGI[i]}</svg><span class="badge">${BADGE[i]}</span></button>`; }).join('');
+    return `<div class="apps">${icons}</div><div class="appname">${BADGE[s.hi]}:${APPS[s.hi]}</div>`;
+  }
+  function listHTML(s) {
+    let start = 0, items;
+    if (s.paged) { start = s.pg * 4; items = s.items.slice(start, start + 4); }
+    else { start = Math.max(0, Math.min(s.hi - 1, s.items.length - 4)); items = s.items.slice(start, start + 4); }
+    const rows = items.map((it, j) => {
+      const i = start + j, n = s.paged ? j + 1 : i + 1, on = !s.paged && i === s.hi && s.items.length > 1;
+      return `<button type="button" class="li${on ? ' hi' : ''}" data-pick="${i}"><span>${n}:${it.l}</span>${it.cur ? '<i class="dia">◆</i>' : ''}</button>`;
+    }).join('');
+    const total = s.paged ? Math.ceil(s.items.length / 4) : s.items.length;
+    let bar = '';
+    if (s.paged && total > 1) bar = `<div class="bar"><i style="top:${100 * s.pg / total}%;height:${100 / total}%"></i></div>`;
+    else if (!s.paged && total > 4) bar = `<div class="bar"><i style="top:${100 * start / total}%;height:${400 / total}%"></i></div>`;
+    return `<div class="list">${rows}</div>${bar}${s.parent ? '<span class="back">◀</span>' : ''}`;
+  }
+  // RECALL shows a value in exact form when it is a fraction or a simple root (1⌟3, √(2), 2√(3)), else in Norm 1
+  function recallVal(v) {
+    if (!isInt(v)) {
+      const f = fracFits(v, false); if (f) return `${f.n < 0 ? '−' : ''}${Math.abs(f.n)}⌟${f.d}`;
+      for (const b of [2, 3, 5, 6, 7]) { const q = smallFrac(v / Math.sqrt(b)); if (q && q.d === 1) return `${q.n < 0 ? '−' : ''}${Math.abs(q.n) === 1 ? '' : Math.abs(q.n)}√(${b})`; }
+    }
+    return fmt(v, true);
+  }
+  const entryHTML = s => s.entry ? s.entry.map(([d]) => esc(d)).join('') + CUR() : null;
+  function varRows(s, mark) {
+    const n = s.names.length, start = Math.max(0, Math.min(s.idx - 1, n - 3));
+    return s.names.slice(start, start + 3).map((L, j) => {
+      const i = start + j, here = i === s.idx;
+      const val = here && s.entry ? entryHTML(s) : fmt(vars[L]);
+      return `<div class="row${here ? ' hi' : ''}"><span>${L === 'x' || L === 'y' ? `<span class="v">${L}</span>` : L}=</span><span class="val">${val}</span></div>`;
+    }).join('') + (mark ? `<div class="foot">${mark}</div>` : '');
+  }
+  function calcScreenHTML(s) {
+    if (s.phase === 'res') {
+      if (s.err) return errHTML(s.err, false);
+      return `<div class="in"><span class="line">${seqHTML(root, false)}</span></div><div class="out">${s.extra ? pairHTML(s.extra) : valueHTML(s.v, s.view)}</div>`;
+    }
+    if (s.entryErr) return errHTML(s.entryErr, false);
+    return `<div class="eqline">${seqHTML(root, false)}</div><div class="rows">${varRows(s)}</div>`;
+  }
+  function solveScreenHTML(s) {
+    if (s.phase === 'err') return errHTML(s.err);
+    if (s.phase === 'cont') return `<div class="eqline">${seqHTML(root, false)}</div><div class="prompt">Continue: [=]<small>[AC] :Cancel</small></div>`;
+    if (s.phase === 'res') {
+      const L = s.res.L, nm = L === 'x' || L === 'y' ? `<span class="v">${L}</span>` : L;
+      return `<div class="eqline">${seqHTML(root, false)}</div><div class="rows"><div class="row"><span>${nm}=</span><span>${fmt(s.res.v)}</span></div><div class="row"><span>L−R=</span><span>${fmt(s.res.lr)}</span></div></div>`;
+    }
+    if (s.entryErr) return errHTML(s.entryErr, false);
+    const T0 = s.names[s.target];
+    return `<div class="eqline">${seqHTML(root, false)}</div><div class="rows">${varRows(s, `Solve for ${T0 === 'x' || T0 === 'y' ? `<span class="v">${T0}</span>` : T0}`)}</div>`;
+  }
+  function screenHTML() {
+    const s = screen;
+    switch (s.t) {
+      case 'main': return mainHTML(s);
+      case 'list': return listHTML(s);
+      case 'prompt': return `<div class="prompt">${s.text}</div>`;
+      case 'confirm': return `<div class="prompt">${s.text}<small>[=] :Yes<br>[AC] :Cancel</small></div>`;
+      case 'msg': return `<div class="prompt">${s.lines.map(esc).join('<br>')}</div>`;
+      case 'contrast': return `<div class="contrast"><span>CONTRAST</span><div class="cbar">${Array.from({ length: 9 }, (_, i) => `<i class="${i < setup.contrast ? 'on' : ''}"></i>`).join('')}</div><span>[◀] LIGHT &nbsp; DARK [▶]</span></div>`;
+      case 'recall': return `<div class="rcl">${['A', 'B', 'C', 'D', 'E', 'F', 'M', 'x', 'y'].map(L => `<span>${L === 'x' || L === 'y' ? `<span class="v">${L}</span>` : L}=${recallVal(vars[L])}</span>`).join('')}</div>`;
+      case 'calc': return calcScreenHTML(s);
+      case 'solve': return solveScreenHTML(s);
+      case 'hist': return histPageHTML(s);
+    }
+    return '';
+  }
+  const MATH_ICON = '<svg viewBox="0 0 15 10"><path d="M1 6l1.5-1 1.5 4L6 1h3"/><rect x="9.5" y="4" width="4" height="5"/></svg>';
+  function statusHTML() {
+    const a = setup.angle, d = setup.disp.t;
+    const items = [
+      ['<span class="bx"><b>S</b></span>', shift], ['<span class="bx"><b>A</b></span>', alpha], ['M', vars.M !== 0], ['→<span class="v">x</span>', sto],
+      [MATH_ICON, setup.io[0] === 'M'], ['D', a === 'DEG'], ['R', a === 'RAD'], ['G', a === 'GRA'], ['FIX', d === 'fix'], ['SCI', d === 'sci'], ['E', setup.eng],
+      ['<span class="v">i</span>', false], ['∠', false], ['<span class="gap"></span>', null],
+      ['▼', !screen && histIdx > 0], ['▲', !screen && history.length > 0 && histIdx < history.length - 1], ['▮▮', !!(multi && multi.i < multi.n - 1) && evaluated], ['☀', true],
+    ];
+    return items.map(([h, on]) => on === null ? h : `<span class="${on ? 'on' : ''}">${h}</span>`).join('');
+  }
+  function render() {
+    const lcd = $('lcd');
+    lcd.classList.toggle('off', off);
+    lcd.style.setProperty('--k', String(0.5 + setup.contrast * 0.055));
+    $('sb').innerHTML = off ? '' : statusHTML();
+    const mx = $('mx');
+    if (off) { mx.innerHTML = ''; }
+    else if (screen) { mx.innerHTML = screenHTML(); if (screen.t === 'hist') keepHistScroll(screen); }
+    else {
+      mx.innerHTML = calcHTML();
+      const ex = $('expr'), c = ex && ex.querySelector('.cur');
+      if (c) {
+        const l = (c.getBoundingClientRect().left - ex.getBoundingClientRect().left) / scale + ex.scrollLeft;
+        if (l > ex.clientWidth - 14) ex.scrollLeft = l - ex.clientWidth + 30;
+      }
+      const rs = $('res'); if (rs) rs.scrollLeft = rs.scrollWidth;
+      if (ex) { $('mL').hidden = ex.scrollLeft <= 1; $('mR').hidden = ex.scrollLeft + ex.clientWidth >= ex.scrollWidth - 1; }
+    }
+    mx.classList.toggle('line', isLine() && !screen && !off && !err);
+    mx.classList.toggle('small', setup.font === 's');
+    $('kShift').classList.toggle('armed', shift);
+    $('kAlpha').classList.toggle('armed', alpha);
+    $('histBtn').setAttribute('aria-pressed', String(histOpen()));
+  }
+
+  // =============== pointer and keyboard ===============
+  $('mx').addEventListener('click', e => {
+    if (off) return;
+    if (screen && screen.t === 'hist') {
+      const h = e.target.closest('[data-hent]');
+      if (h) recallHist(+h.dataset.hent); else if (e.target.closest('[data-hclr]')) clearHist(screen);
+      render(); return;
+    }
+    const p = e.target.closest('[data-pick]'), a = e.target.closest('[data-app]');
+    if (screen && screen.t === 'list' && p) { pick(screen, +p.dataset.pick); render(); return; }
+    if (screen && screen.t === 'main' && a) { screen.hi = +a.dataset.app; pickApp(+a.dataset.app); render(); return; }
+    if (!screen && e.target.closest('#expr')) placeCursorAt(e.clientX, e.clientY);
+  });
+  const flashT = new WeakMap();
+  const flash = b => { clearTimeout(flashT.get(b)); b.classList.add('press'); flashT.set(b, setTimeout(() => b.classList.remove('press'), 90)); };
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    let k = e.key;
+    if (k === 'Enter' && e.target.closest && e.target.closest('a, .li, .app, .swbtn, .hent, .hclr')) return;
+    if (k === '=') k = 'Enter';
+    if (k === 'Delete') k = 'Escape';
+    if (e.code === 'NumpadDecimal') k = '.';
+    const nav = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' };
+    if (nav[k]) { e.preventDefault(); pressNav(nav[k]); return; }
+    const extraKeys = { '^': 'pow', '(': 'lpar', ')': 'rpar', '%': ['ans', 's'], '!': ['inv', 's'], ',': ['rpar', 's'], x: 'xv', X: 'xv' };
+    let def = keyMap[k], mod = '';
+    if (!def && extraKeys[k]) { const [id, m] = [].concat(extraKeys[k]); def = [...TOP, ...FN, ...NUM].find(q => q.id === id); mod = m || ''; }
+    if (!def) return;
+    e.preventDefault();
+    flash(def.btn);
+    if (mod === 's' && !off) { shift = true; alpha = false; }
+    press(def);
+  });
+
+  // =============== history page ===============
+  // the History button turns the calculator screen into a list of the calculations ▲/▼ step through,
+  // newest first: tap one (or ▲▼ then =) to show it, AC to go back, Clear to empty it
+  const histOpen = () => !!screen && (screen.t === 'hist' || !!screen.fromHist);
+  function histPageHTML(s) {
+    if (!history.length) return '<div class="hpage"><div class="hhd"><span>History</span></div><div class="hnone">No history</div></div>';
+    const rows = history.map((h, i) => `<button type="button" class="hent${i === s.hi ? ' hi' : ''}" data-hent="${i}"><span class="hx">${seqHTML(h.root, false)}</span><span class="hr">${histResultHTML(h)}</span></button>`).join('');
+    return `<div class="hpage"><div class="hhd"><span>History (${history.length})</span><button type="button" class="hclr" data-hclr>Clear</button></div><div class="hsc">${rows}</div></div>`;
+  }
+  // the list is redrawn on every key, so keep where it was scrolled to (and bring the highlight into view after ▲▼)
+  function keepHistScroll(s) {
+    const sc = $('mx').querySelector('.hsc'); if (!sc) return;
+    sc.scrollTop = s.scroll || 0;
+    const el = s.reveal && sc.querySelector('.hent.hi');
+    if (el) {
+      if (el.offsetTop < sc.scrollTop) sc.scrollTop = el.offsetTop;
+      else if (el.offsetTop + el.offsetHeight > sc.scrollTop + sc.clientHeight) sc.scrollTop = el.offsetTop + el.offsetHeight - sc.clientHeight;
+    }
+    s.reveal = false; s.scroll = sc.scrollTop;
+    sc.onscroll = () => { s.scroll = sc.scrollTop; };
+  }
+  function openHist() {
+    shift = alpha = sto = insArg = false;
+    const hi = histIdx >= 0 && histIdx < history.length ? histIdx : 0;
+    screen = { t: 'hist', hi, scroll: 0, reveal: true };
+  }
+  function recallHist(i) {
+    if (off || !history[i]) return;
+    screen = null; shift = alpha = sto = insArg = false; errCur = null;
+    if (histIdx < 0) draft = !evaluated && !err && root.length ? root : null;
+    showHist(i);
+  }
+  function clearHist(s) {
+    confirm('Clear History?', () => { history = []; histIdx = -1; draft = null; save(); openHist(); }, () => { screen = s; });
+    screen.fromHist = true;
+  }
+  $('histBtn').addEventListener('click', () => {
+    if (off) return;
+    if (histOpen()) screen = null; else openHist();
+    render();
+  });
+
+  // =============== fit to the screen ===============
+  // shrink the switch bar + calculator just enough to fit the visible screen height (never enlarge)
+  let scale = 1;
+  function fit() {
+    const stage = $('stage'), box = $('fit');
+    const natural = stage.offsetHeight;   // layout height, not affected by the transform
+    const screenH = $('vhProbe').offsetHeight || window.innerHeight;
+    const r = box.getBoundingClientRect();
+    const top = r.top + window.scrollY, below = box.parentElement.getBoundingClientRect().bottom - r.bottom;   // the note and padding under it
+    scale = Math.min(1, Math.max(0.6, (screenH - top - below - 8) / natural));
+    stage.style.transform = scale < 1 ? `scale(${scale})` : '';
+    box.style.height = scale < 1 ? `${natural * scale}px` : '';
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
+
+  // =============== boot ===============
+  load();
+  buildTop();
+  build($('fn'), FN);
+  build($('num'), NUM);
+  render();
+  fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+})();
+// installable app + offline copy; only works on the website (not when the file is opened directly)
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

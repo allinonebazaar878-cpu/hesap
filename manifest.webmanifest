@@ -1,0 +1,18 @@
+{
+  "id": "./Hesap%20EX.html",
+  "name": "Hesap EX Calculator",
+  "short_name": "Hesap EX",
+  "description": "HESAP scientific calculator.",
+  "start_url": "./Hesap%20EX.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e8e9ee",
+  "theme_color": "#e8e9ee",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

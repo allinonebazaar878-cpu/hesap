@@ -1,0 +1,2230 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hesap Scientific</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one physical calculator; its bottom buttons swap the keypad for the Guide, History, Stats, Table and Settings pages. */
+:root {
+  --ground: #e6e9ef;
+  --ink: #1b2231;
+  --muted: #5b6477;
+  --panel: #fbfbfd;
+  --line: #d3d8e2;
+  --chip: #eef1f6;
+  --accent: #2a8f84;
+  --bad: #b8475f;
+  /* the calculator itself keeps one look in both themes */
+  --shell: #24314f;
+  --shell-edge: #172038;
+  --shell-text: #aeb9d2;
+  --lcd: #c7d4be;
+  --lcd-ink: #1c2819;
+  --lcd-dim: #84937b;
+  --key: #f1efe8;
+  --key-ink: #1b2231;
+  --key-shadow: #b8b4a8;
+  --fkey: #3b4b70;
+  --fkey-ink: #e9edf6;
+  --fkey-shadow: #1b2540;
+  --shift: #f2b632;
+  --alpha: #ff92b4;
+  --eq: #2a8f84;
+  --eq-shadow: #1b5f58;
+  --clear: #b8475f;
+  --clear-shadow: #7d2c3e;
+  --f-ui: "Sora", "Segoe UI", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --f-page: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  /* pages (History, Stats, Table, Settings): grey sheet with white cards */
+  --pg-bg: #f4f5f7; --card: #ffffff; --field: #f7f8fa; --field-line: #dfe3ea; --acc-soft: #e2f2ef; --acc-ink: #1e7d72;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 6px 18px -8px rgba(20, 30, 60, .18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0f131b; --ink: #e2e6ee; --muted: #99a2b4; --panel: #171d29; --line: #2a3346; --chip: #1f2737; --accent: #4cc2b4; --bad: #ef7f97;
+    --pg-bg: #12171f; --card: #1a2130; --field: #222a3a; --field-line: #2f3a50; --acc-soft: #1d3b38; --acc-ink: #7fd9cd; --card-shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0f131b; --ink: #e2e6ee; --muted: #99a2b4; --panel: #171d29; --line: #2a3346; --chip: #1f2737; --accent: #4cc2b4; --bad: #ef7f97;
+    --pg-bg: #12171f; --card: #1a2130; --field: #222a3a; --field-line: #2f3a50; --acc-soft: #1d3b38; --acc-ink: #7fd9cd; --card-shadow: none;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-ui); font-size: 14px; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 40px; display: grid; grid-template-columns: minmax(0, 410px); justify-content: center; }
+
+/* switch to the other calculator layout */
+.switchbar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.swbtn { display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px/1 var(--f-ui); color: var(--ink); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; }
+.swbtn:hover { border-color: var(--muted); }
+.swbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swbtn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- calculator body ---------- */
+.calc { width: 100%; max-width: 410px; background: var(--shell); border-radius: 26px 26px 34px 34px; padding: 18px 14px 22px; box-shadow: inset 0 -6px 0 var(--shell-edge), 0 18px 40px -18px rgba(10, 16, 30, .55); }
+.brand { display: flex; justify-content: space-between; align-items: baseline; padding: 0 6px 12px; color: var(--shell-text); }
+.brand b { font-weight: 700; letter-spacing: .28em; font-size: 15px; color: var(--fkey-ink); }
+.brand span { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+
+.lcd { background: var(--lcd); color: var(--lcd-ink); border-radius: 10px; padding: 7px 12px 9px; box-shadow: inset 0 2px 6px rgba(0,0,0,.28); border: 6px solid var(--shell-edge); font-family: var(--f-num); height: 152px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.lcd.off > * { visibility: hidden; }
+.ind { display: flex; flex-wrap: wrap; gap: 4px 9px; font-size: 10px; font-weight: 600; letter-spacing: .06em; min-height: 14px; }
+.ind span { color: var(--lcd-dim); opacity: .45; }
+.ind span.on { color: var(--lcd-ink); opacity: 1; }
+.ind .sp { flex: 1; }
+.expr { position: relative; font-size: 18px; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding-block: 4px; display: flex; align-items: center; cursor: text; touch-action: pan-y; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* touches land on .expr itself (it is never redrawn), not on the pieces inside, so a hold-and-slide is not lost when the line redraws */
+.expr .line { pointer-events: none; }
+/* magnifier shown above the finger while holding and sliding on the screen */
+.loupe { position: fixed; z-index: 10; width: 168px; height: 64px; background: var(--lcd); color: var(--lcd-ink); border: 3px solid var(--shell-edge); border-radius: 14px; box-shadow: 0 8px 22px rgba(0, 0, 0, .35); overflow: hidden; pointer-events: none; font-family: var(--f-num); font-size: 18px; }
+.loupe-in { position: absolute; left: 0; top: 0; transform-origin: 0 0; white-space: nowrap; }
+.loupe .line { display: inline-block; }
+.expr::-webkit-scrollbar { display: none; }
+.expr > .line { display: inline-block; padding-right: 8px; }
+.cur { display: inline-block; width: 2px; height: 1.05em; background: var(--lcd-ink); vertical-align: middle; margin: 0 -1px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cur { animation: none; } }
+.res { text-align: right; font-size: 28px; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; min-height: 34px; }
+.res::-webkit-scrollbar { display: none; }
+.res sup { font-size: .5em; vertical-align: .9em; }
+.res .x10 { font-size: .7em; }
+.res .small { font-size: 17px; }
+.res.err { font-size: 19px; font-weight: 600; }
+.res .hintline { display: block; font-size: 11px; font-weight: 500; opacity: .8; }
+.note { font-size: 13px; opacity: .75; }
+
+/* natural-display templates */
+.box { display: inline-block; width: .62em; height: .86em; border: 1.5px dashed var(--lcd-ink); vertical-align: middle; margin: 0 1px; opacity: .55; position: relative; }
+.box.act { opacity: 1; border-style: solid; }
+.box.act .cur { position: absolute; left: 1px; top: 50%; transform: translateY(-50%); height: 80%; margin: 0; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: .84em; line-height: 1.12; }
+.frac > .n { border-bottom: 1.6px solid var(--lcd-ink); padding: 0 3px 1px; }
+.frac > .d { padding: 1px 3px 0; }
+.pw { font-size: .68em; vertical-align: .75em; margin-left: 1px; }
+.rt { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.rt .rs { font-size: 1.05em; line-height: 1; padding-top: 1px; }
+.rt .rb { border-top: 1.6px solid var(--lcd-ink); padding: 2px 2px 0; margin-left: -1px; }
+.ri { font-size: .62em; vertical-align: .95em; margin-right: -4px; }
+.sb { font-size: .68em; vertical-align: -.4em; }
+.mk { font-size: .8em; }
+
+/* menus on the LCD */
+.menu { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; font-size: 14px; align-content: center; padding-block: 2px; }
+.menu button { all: unset; cursor: pointer; padding: 2px 3px; border-radius: 3px; white-space: nowrap; touch-action: manipulation; }
+.menu button:hover, .menu button:focus-visible { background: rgba(28, 40, 25, .12); }
+.menu .title { grid-column: 1 / -1; font-size: 11px; opacity: .7; letter-spacing: .06em; }
+.prompt { font-size: 16px; align-self: center; }
+/* the answer line is empty while a menu is open, so give its room to the menu (on phones the screen is too short otherwise) */
+.lcd.menuing .res { display: none; }
+.lcd.menuing .expr { padding-block: 0; }
+
+/* keys */
+.pad { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px 7px; margin-top: 14px; }
+.pad.main { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 9px; margin-top: 16px; }
+.cell { display: flex; flex-direction: column; align-items: stretch; gap: 1px; min-width: 0; }
+.lab { display: flex; justify-content: space-between; gap: 2px; height: 14px; line-height: 14px; font-size: 9.5px; white-space: nowrap; padding-inline: 1px; }
+.lab.center { justify-content: center; }
+.lab .s { color: var(--shift); }
+.lab .a { color: var(--alpha); }
+.lab sup { font-size: .75em; }
+.lab sub { font-size: .75em; }
+.k { font-family: var(--f-ui); border: 0; cursor: pointer; border-radius: 9px; height: 32px; background: var(--fkey); color: var(--fkey-ink); font-size: 12.5px; font-weight: 500; box-shadow: 0 3px 0 var(--fkey-shadow); transition: transform .06s, box-shadow .06s, background .1s; padding: 0; min-width: 0; touch-action: manipulation; display: flex; align-items: center; justify-content: center; gap: 1px; white-space: nowrap; }
+.k sup { font-size: .7em; align-self: flex-start; margin-top: 6px; }
+.k sub { font-size: .7em; align-self: flex-end; margin-bottom: 6px; }
+.k:active, .k.press { transform: translateY(2px); box-shadow: 0 1px 0 var(--fkey-shadow); }
+.k:focus-visible { outline: 2px solid var(--shift); outline-offset: 2px; }
+.k .bx { display: inline-block; width: 7px; height: 8px; border: 1.3px solid currentColor; border-radius: 1px; }
+.k .bx.f { background: currentColor; }
+.k .kf { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.k .kf i { display: block; width: 14px; height: 1.3px; background: currentColor; }
+.k.mod { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; }
+.k.shiftkey { background: var(--shift); color: #2a1f05; box-shadow: 0 3px 0 #a87a14; }
+.k.alphakey { background: var(--alpha); color: #3a0d1b; box-shadow: 0 3px 0 #b05a78; }
+.k.armed { filter: brightness(1.18); outline: 2px solid #fff; outline-offset: 1px; }
+.k.big { height: 48px; background: var(--key); color: var(--key-ink); font-family: var(--f-num); font-size: 21px; box-shadow: 0 3px 0 var(--key-shadow); }
+.k.big:active, .k.big.press { box-shadow: 0 1px 0 var(--key-shadow); }
+.k.big sup { margin-top: 12px; }
+.k.op { font-size: 22px; }
+.k.clr { background: var(--clear); color: #fff; box-shadow: 0 3px 0 var(--clear-shadow); font-family: var(--f-ui); font-size: 15px; font-weight: 600; }
+.k.clr:active, .k.clr.press { box-shadow: 0 1px 0 var(--clear-shadow); }
+.k.eq { background: var(--eq); color: #fff; box-shadow: 0 3px 0 var(--eq-shadow); }
+.k.eq:active, .k.eq.press { box-shadow: 0 1px 0 var(--eq-shadow); }
+.k.txt { font-family: var(--f-ui); font-size: 14px; }
+
+.dpad { grid-column: 3 / 5; grid-row: 1 / 3; align-self: center; justify-self: center; width: 100%; max-width: 112px; aspect-ratio: 1.45; background: var(--fkey-shadow); border-radius: 40% / 50%; display: grid; grid-template-columns: 1fr 1.1fr 1fr; grid-template-rows: 1fr 1fr 1fr; padding: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,.4); }
+.dpad button { border: 0; background: var(--fkey); color: var(--fkey-ink); cursor: pointer; font-size: 11px; padding: 0; touch-action: manipulation; }
+.dpad button:active { filter: brightness(.85); }
+.dpad button:focus-visible { outline: 2px solid var(--shift); outline-offset: 1px; position: relative; z-index: 1; }
+.dpad .up { grid-column: 2; grid-row: 1; border-radius: 8px 8px 2px 2px; }
+.dpad .dn { grid-column: 2; grid-row: 3; border-radius: 2px 2px 8px 8px; }
+.dpad .lf { grid-column: 1; grid-row: 2; border-radius: 10px 2px 2px 10px; }
+.dpad .rg { grid-column: 3; grid-row: 2; border-radius: 2px 10px 10px 2px; }
+.dpad .mid { grid-column: 2; grid-row: 2; background: var(--fkey); }
+/* phones: taller keys and a bigger arrow pad, closer to the 44px finger size Apple and Google advise */
+@media (max-width: 480px) {
+  /* the extra key height is paid for with less empty space, so the whole keypad still fits as before */
+  .wrap { padding-block-start: 8px; }
+  .calc { padding-top: 12px; }
+  .brand { padding-bottom: 8px; }
+  .lcd { height: 124px; }
+  .menu { row-gap: 0; }
+  .menu button { padding-block: 1px; }
+  .pad { margin-top: 10px; }
+  .pad.main { margin-top: 10px; gap: 5px 9px; }
+  .k { height: 42px; }
+  .k.big { height: 50px; }
+  .dpad { aspect-ratio: 1.05; max-width: none; }
+  .dpad button { font-size: 13px; }
+}
+/* app buttons along the bottom of the calculator: Guide, History, Stats, Table, Settings */
+.tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--fkey); }
+.tool { font-family: var(--f-ui); border: 0; cursor: pointer; border-radius: 9px; height: 46px; padding: 0; min-width: 0; background: var(--fkey); color: var(--fkey-ink); box-shadow: 0 3px 0 var(--fkey-shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 9.5px; font-weight: 600; letter-spacing: .04em; touch-action: manipulation; transition: transform .06s, box-shadow .06s; }
+.tool:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--fkey-shadow); }
+.tool:focus-visible { outline: 2px solid var(--shift); outline-offset: 2px; }
+.tool svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ---------- Guide (learn mode): the real keypad stays, keys explain themselves in a panel where the screen was ---------- */
+.learn { background: var(--lcd); color: var(--lcd-ink); border-radius: 10px; border: 6px solid var(--shell-edge); box-shadow: inset 0 2px 6px rgba(0,0,0,.28); padding: 8px 12px; height: 152px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(28, 40, 25, .45) transparent; font-size: 13px; line-height: 1.5; --lcd-ink: #1c2819;
+  /* same size as the normal screen, so the calculator never changes size; soft shadows show there is more to scroll */
+  background: linear-gradient(var(--lcd) 30%, rgba(199, 212, 190, 0)) top / 100% 22px no-repeat local, linear-gradient(rgba(199, 212, 190, 0), var(--lcd) 70%) bottom / 100% 22px no-repeat local, radial-gradient(farthest-side at 50% 0, rgba(28, 40, 25, .3), transparent) top / 100% 9px no-repeat scroll, radial-gradient(farthest-side at 50% 100%, rgba(28, 40, 25, .3), transparent) bottom / 100% 9px no-repeat scroll, var(--lcd); }
+.learn::-webkit-scrollbar { width: 5px; }
+.learn::-webkit-scrollbar-thumb { background: rgba(28, 40, 25, .4); border-radius: 3px; }
+.learn p { margin: 0 0 6px; }
+.learn ol { margin: 4px 0 6px; padding-left: 20px; }
+.learn .lt { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 15px; font-weight: 700; }
+.learn .tip { font-size: 12px; opacity: .8; }
+.learn .ex { font-family: var(--f-num); font-size: 12.5px; background: rgba(28, 40, 25, .08); border-radius: 6px; padding: 3px 7px; display: inline-block; margin-bottom: 6px; }
+.learn .alt { display: flex; gap: 8px; align-items: baseline; margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(28, 40, 25, .25); }
+.learn .tag2 { flex: none; font-size: 10px; font-weight: 700; letter-spacing: .06em; border-radius: 5px; padding: 1px 6px; }
+.learn .tag2.s { background: var(--shift); color: #2a1f05; }
+.learn .tag2.a { background: var(--alpha); color: #3a0d1b; }
+.learn .k { display: inline-flex; height: 28px; min-width: 42px; padding: 0 8px; font-size: 12.5px; cursor: default; box-shadow: none; flex: none; }
+.learn .k.big { font-size: 15px; }
+.learn .k .bx { width: 7px; height: 8px; border: 1.3px solid currentColor; border-radius: 1px; }
+.learn .k sup { margin-top: 2px; }
+.k.picked, .dpad button.picked { outline: 2px solid #fff; outline-offset: 2px; position: relative; z-index: 1; }
+@media (max-width: 480px) { .learn { height: 124px; } }
+
+/* the button of the page that is open lights up like SHIFT */
+.tool.on { background: var(--shift); color: #2a1f05; box-shadow: 0 3px 0 #a87a14; }
+
+/* ---------- pages (design B "soft cards"): History, Stats, Table and Settings take the keypad's place.
+   A light grey sheet fills the calculator body down to the navy button row; each section is a white card. ---------- */
+.pages { display: flex; flex-direction: column; overflow: hidden; margin: -18px -14px 0; padding: 14px 16px 20px; background: var(--pg-bg); border-radius: 26px 26px 0 0; font-family: var(--f-page); color: var(--ink); }
+@media (max-width: 480px) { .pages { margin-top: -12px; } }
+.pagebar { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.rbtn { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.rbtn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.rbtn[aria-expanded="true"] { background: var(--accent); color: #fff; }
+/* "How it works" on the Table page: a labelled pill with a play sign, so it reads as a button that shows something */
+.helpbtn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px 0 12px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px -2px rgba(42, 143, 132, .6); }
+.helpbtn svg { width: 14px; height: 14px; fill: currentColor; }
+.helpbtn:hover { filter: brightness(1.08); }
+.helpbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.rbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* every page is exactly the calculator's size (set by sizePages); its content scrolls inside */
+.page { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; margin: 0 -8px; padding: 2px 8px 8px; scrollbar-width: thin; scrollbar-color: var(--field-line) transparent; }
+.page::-webkit-scrollbar { width: 6px; }
+.page::-webkit-scrollbar-thumb { background: var(--field-line); border-radius: 3px; }
+.page:focus { outline: none; }
+.page h1 { font-size: 27px; font-weight: 800; letter-spacing: -.02em; margin: 4px 0; }
+.page .lead { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 0 0 16px; }
+.phead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.sec { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--card-shadow); min-width: 0; }
+.sh { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.sh h2 { font-size: 17px; font-weight: 700; margin: 0; }
+.sh .num { width: 24px; height: 24px; border-radius: 50%; background: var(--acc-soft); color: var(--acc-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex: none; }
+.hint { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
+.sec > .hint:last-child { margin: 10px 0 0; }
+.nw { white-space: nowrap; }
+.linkbtn { background: none; border: 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; padding: 4px 0; }
+.danger { color: var(--bad); }
+.msg { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.5; }
+.msg.bad { color: var(--bad); }
+
+/* fields */
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 460px) { .inputs { grid-template-columns: 1fr; } }
+label.f { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); min-width: 0; }
+textarea { width: 100%; min-height: 116px; resize: vertical; border: 1px solid var(--field-line); border-radius: 12px; background: var(--field); color: var(--ink); font-family: var(--f-num); font-size: 14px; padding: 10px 12px; line-height: 1.5; }
+textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tag { display: inline-block; font-size: 12px; font-weight: 600; color: var(--acc-ink); background: var(--acc-soft); border-radius: 999px; padding: 4px 11px; margin-bottom: 12px; }
+.mini { display: block; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 7px 12px 6px; font-size: 11.5px; font-weight: 700; color: var(--muted); min-width: 0; }
+.mini:focus-within { border-color: var(--accent); background: var(--card); }
+.mini input, .mini select { display: block; width: 100%; border: 0; background: transparent; color: var(--ink); font-family: var(--f-num); font-size: 17px; padding: 2px 0 0; outline: none; }
+.range { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.digits { margin-top: 12px; max-width: 140px; }
+
+/* segmented choices and rows (Settings) */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; background: var(--field); border-radius: 12px; padding: 4px; }
+.seg button { font: inherit; font-size: 13px; font-weight: 700; border: 0; border-radius: 9px; padding: 9px 4px; background: transparent; color: var(--muted); cursor: pointer; min-width: 0; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--acc-ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rows { padding-block: 4px; }
+/* live examples under each setting: worked out by the calculator with the setting that is picked */
+.live { background: var(--field); border-radius: 12px; padding: 8px 12px; margin-top: 12px; }
+.live > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; }
+.live > div + div { border-top: 1px solid var(--line); }
+.live .lk { font-size: 12.5px; color: var(--muted); }
+.live .lv { font-family: var(--f-num); font-size: 14.5px; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.live .lv sup { font-size: .65em; vertical-align: .7em; }
+.live .lv .x10 { font-size: .85em; }
+.srow.ok small { color: var(--acc-ink); }
+/* teaching new users: a reassuring note, a short label under each choice, and a "when to use" tip */
+.newtip { display: flex; gap: 10px; align-items: flex-start; background: var(--acc-soft); color: var(--acc-ink); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+.newtip svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
+.newtip p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.seg.two-line button { padding: 7px 2px; line-height: 1.25; }
+.seg.two-line button small { display: block; font-size: 10.5px; font-weight: 600; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+.seg.two-line button[aria-pressed="true"] small { color: var(--acc-ink); }
+.when { position: relative; font-size: 13px; line-height: 1.5; color: var(--ink); background: var(--field); border-left: 3px solid var(--accent); border-radius: 0; padding: 8px 12px; margin: 12px 0 0; }
+.when::before { content: "When to use this"; display: block; font-size: 11px; font-weight: 800; letter-spacing: .04em; color: var(--acc-ink); margin-bottom: 2px; }
+.srow { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; text-align: left; padding: 12px 0; cursor: pointer; }
+.srow + .srow { border-top: 1px solid var(--line); }
+.srow b { font-weight: 700; }
+.srow small { display: block; font-size: 12.5px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+.srow svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.srow.danger, .srow.danger small { color: var(--bad); }
+.srow:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+/* Statistics results (built by renderStats) */
+#stOut .sgroup { background: var(--card); border-radius: 18px; padding: 14px 16px 6px; margin-bottom: 12px; box-shadow: var(--card-shadow); }
+#stOut > .msg { padding: 0 4px; margin-bottom: 12px; }
+#stOut > .msg:first-child { background: var(--card); border-radius: 18px; padding: 14px 16px; box-shadow: var(--card-shadow); }
+.sgroup h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; }
+.sgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
+.sv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--ink); padding: 11px 0; cursor: pointer; font: inherit; text-align: left; min-width: 0; }
+.sgrid .sv:first-child { border-top: 0; }
+.sv:hover .val { color: var(--accent); }
+.sv:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sv .lb { color: var(--muted); font-size: 13.5px; }
+.sv .lb i { font-style: normal; font-family: var(--f-num); font-size: 12px; color: var(--acc-ink); margin-left: 5px; white-space: nowrap; }
+.sv .val { font-family: var(--f-num); font-variant-numeric: tabular-nums; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.eqn { font-family: var(--f-num); font-size: 14px; background: var(--field); border-radius: 10px; padding: 9px 12px; margin: 6px 0 8px; overflow-x: auto; white-space: nowrap; }
+
+/* History */
+.hist { list-style: none; margin: 0 0 12px; padding: 2px 16px; }
+.hist li + li { border-top: 1px solid var(--line); }
+.hist li button { width: 100%; display: grid; gap: 4px; background: transparent; border: 0; color: var(--ink); padding: 14px 0; cursor: pointer; font: inherit; text-align: left; min-width: 0; --lcd-ink: var(--ink); }
+.hist li button:hover .hr { color: var(--accent); }
+.hist li button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.hist .he { font-family: var(--f-num); font-size: 14.5px; color: var(--muted); overflow-x: auto; white-space: nowrap; scrollbar-width: none; --lcd-ink: var(--muted); }
+.hist .hr { font-family: var(--f-num); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.hist .hr .is { color: var(--muted); font-weight: 400; font-size: 17px; margin-right: 6px; }
+.hist .hr sup { font-size: .55em; vertical-align: .9em; }
+.hist .hr .x10 { font-size: .75em; }
+.hist .box { display: none; }
+.empty { color: var(--muted); font-size: 14px; line-height: 1.6; padding: 14px 0; }
+.vars { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; }
+.vars div { background: var(--field); border-radius: 10px; padding: 7px 10px; font-family: var(--f-num); font-size: 13px; display: flex; justify-content: space-between; gap: 6px; min-width: 0; }
+.vars b { color: var(--acc-ink); }
+.vars span { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+
+/* Table */
+.fbox { display: flex; align-items: center; gap: 8px; border: 2px solid var(--field-line); border-radius: 12px; background: var(--field); padding: 0 12px; }
+.fbox:focus-within { border-color: var(--accent); background: var(--card); }
+.fbox span { font-family: var(--f-num); font-size: 15px; color: var(--muted); white-space: nowrap; }
+.fbox input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font-family: var(--f-num); font-size: 19px; padding: 11px 0; outline: none; }
+.tkeys { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.tkeys button { border: 1px solid var(--field-line); border-radius: 999px; height: 36px; background: var(--field); color: var(--ink); font-family: var(--f-num); font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; min-width: 0; touch-action: manipulation; }
+.tkeys button:active { background: var(--acc-soft); border-color: var(--accent); }
+@media (max-width: 480px) { .tkeys { grid-template-columns: repeat(4, minmax(0, 1fr)); } .tkeys button { height: 42px; font-size: 15px; } }
+.exl { font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 14px 0 8px; }
+.tex { display: flex; flex-wrap: wrap; gap: 8px; }
+.tex button { border: 1px solid var(--field-line); background: var(--field); color: var(--ink); border-radius: 999px; padding: 7px 13px; font-family: var(--f-num); font-size: 13px; font-weight: 600; cursor: pointer; }
+.tex button:hover, .tex button.on { border-color: var(--accent); color: var(--acc-ink); background: var(--acc-soft); }
+.tkeys button:focus-visible, .tex button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tblwrap { overflow-x: auto; }
+table.ft { border-collapse: collapse; width: 100%; font-family: var(--f-num); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+table.ft th { text-align: right; font-family: var(--f-page); font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 0 4px 8px; }
+table.ft td { text-align: right; padding: 10px 4px; border-top: 1px solid var(--line); font-weight: 600; }
+table.ft td:first-child, table.ft th:first-child { text-align: left; color: var(--muted); font-weight: 500; }
+table.ft td.na { color: var(--muted); font-family: var(--f-page); font-size: 12.5px; font-weight: 500; }
+.tnote { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
+/* Table: feature buttons (Values / Graph / Zeros) */
+.feat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 8px; }
+.feat button { display: flex; flex-direction: column; align-items: center; gap: 5px; border: 1.5px solid transparent; background: var(--card); color: var(--muted); border-radius: 14px; padding: 11px 4px 9px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: var(--card-shadow); min-width: 0; }
+.feat button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.feat button[aria-selected="true"] { border-color: var(--accent); color: var(--acc-ink); background: var(--acc-soft); }
+.feat button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fdesc { font-size: 13px; color: var(--muted); margin: 0 4px 12px; line-height: 1.5; }
+.range.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 400px) { .feat button { font-size: 12px; padding-inline: 2px; } }
+.fbox + .fbox { margin-top: 8px; }
+/* Compare: rows where f(X) and g(X) give the same answer */
+table.ft tr.same td { background: var(--acc-soft); color: var(--acc-ink); }
+table.ft tr.same td:first-child { border-radius: 8px 0 0 8px; }
+table.ft tr.same td:last-child { border-radius: 0 8px 8px 0; }
+
+/* Graph */
+.gread { font-family: var(--f-num); font-size: 13.5px; background: var(--field); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; min-height: 36px; color: var(--muted); }
+.gread b { color: var(--ink); font-weight: 600; }
+.gwrap { position: relative; touch-action: none; cursor: crosshair; }
+.gwrap svg { display: block; width: 100%; height: 230px; }
+.g-grid { stroke: var(--line); stroke-width: 1; }
+.g-axis { stroke: var(--muted); stroke-width: 1.2; }
+.g-line { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.g-tick { fill: var(--muted); font-family: var(--f-num); font-size: 10.5px; }
+.g-guide { stroke: var(--acc-ink); stroke-width: 1; stroke-dasharray: 3 3; }
+.g-dot { fill: var(--card); stroke: var(--acc-ink); stroke-width: 2.5; }
+
+/* Zeros */
+.zlist { list-style: none; margin: 0; padding: 0; }
+.zlist li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 11px 0; font-family: var(--f-num); font-size: 18px; font-weight: 600; }
+.zlist li + li { border-top: 1px solid var(--line); }
+.zlist li span { font-family: var(--f-page); font-size: 12.5px; font-weight: 500; color: var(--muted); }
+
+/* "How it works" sheet with a looping silent animation */
+.pages { position: relative; }
+.helpov { position: absolute; inset: 0; z-index: 5; background: rgba(15, 20, 30, .45); display: flex; align-items: flex-end; border-radius: inherit; }
+.helpsheet { width: 100%; max-height: 100%; overflow-y: auto; background: var(--card); border-radius: 22px 22px 0 0; padding: 14px 18px 18px; box-shadow: 0 -8px 30px rgba(0, 0, 0, .2); animation: sheetUp .22s ease-out; }
+@keyframes sheetUp { from { transform: translateY(30px); opacity: 0; } }
+.helphead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.helphead h2 { font-size: 19px; font-weight: 800; margin: 0; }
+.helphead .rbtn { width: 34px; height: 34px; box-shadow: none; background: var(--field); }
+.demo { position: relative; background: var(--pg-bg); border-radius: 16px; padding: 12px; height: 214px; overflow: hidden; }
+.demcap { font-size: 14px; font-weight: 700; text-align: center; margin: 12px 0 6px; min-height: 21px; }
+.demsteps { margin: 0 0 14px; padding-left: 20px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.demsteps li.now { color: var(--ink); font-weight: 600; }
+.okbtn { width: 100%; border: 0; border-radius: 12px; padding: 13px; background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.okbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* demo parts */
+.d-field { background: var(--card); border: 2px solid var(--accent); border-radius: 10px; padding: 7px 10px; font-family: var(--f-num); font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.d-field .p { color: var(--muted); font-size: 13px; }
+.d-caret { display: inline-block; width: 2px; height: 17px; background: var(--ink); margin-left: 1px; animation: blink 1s steps(1) infinite; vertical-align: middle; }
+.d-pills { display: flex; gap: 6px; margin: 8px 0; }
+.d-pills span { background: var(--card); border-radius: 8px; padding: 3px 8px; font-size: 11.5px; font-weight: 700; color: var(--muted); opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s; }
+.d-pills span b { font-family: var(--f-num); color: var(--ink); margin-left: 3px; }
+.d-pills span.in { opacity: 1; transform: none; }
+.d-rows { background: var(--card); border-radius: 10px; padding: 2px 10px; font-family: var(--f-num); font-size: 13px; }
+.d-rows div { display: flex; justify-content: space-between; padding: 3px 0; opacity: 0; transition: opacity .25s; }
+.d-rows div + div { border-top: 1px solid var(--line); }
+.d-rows div.in { opacity: 1; }
+.d-rows div b { font-weight: 600; min-width: 2.5em; text-align: right; }
+.d-rows div span { flex: 1; }
+.d-rows div.same { background: var(--acc-soft); color: var(--acc-ink); border-radius: 6px; transition: background .3s, opacity .25s; }
+.d-graph { background: var(--card); border-radius: 10px; margin-top: 8px; }
+.d-graph svg { display: block; width: 100%; height: 150px; }
+.d-graph .g-line { transition: stroke-dashoffset 1.4s ease-in-out; }
+.d-tag { position: absolute; background: var(--ink); color: var(--card); font-family: var(--f-num); font-size: 11.5px; border-radius: 7px; padding: 3px 7px; white-space: nowrap; opacity: 0; transition: opacity .25s; transform: translate(-50%, -130%); pointer-events: none; }
+.d-tag.in { opacity: 1; }
+.d-zero { fill: #f2b632; stroke: var(--card); stroke-width: 2; opacity: 0; transition: opacity .3s; }
+.d-zero.in { opacity: 1; animation: pulse 1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 50% { transform: scale(1.5); } }
+.d-finger { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: rgba(42, 143, 132, .35); border: 2px solid var(--accent); transform: translate(-50%, -50%); opacity: 0; transition: left .5s ease-in-out, top .5s ease-in-out, opacity .2s; pointer-events: none; }
+.d-finger.in { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .helpsheet, .d-zero.in, .d-caret { animation: none; } .d-graph .g-line, .d-finger { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="switchbar"><a class="swbtn" href="Hesap%20EX.html" title="Open the fx-991EX-style layout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Switch to EX layout</a></div>
+  <section class="calc" aria-label="Scientific calculator">
+    <div class="face" id="face">
+    <div class="brand"><b>HESAP</b><span id="brandSub">SC-10 · Natural display</span></div>
+    <div class="lcd" id="lcd" role="status" aria-live="polite">
+      <div class="ind" id="ind"></div>
+      <div class="expr" id="expr"></div>
+      <div class="res" id="res"></div>
+    </div>
+    <div class="learn" id="learn" aria-live="polite" hidden></div>
+    <div class="pad" id="padF"></div>
+    <div class="pad main" id="padM"></div>
+    <div class="loupe" id="loupe" hidden aria-hidden="true"><div class="loupe-in"></div></div>
+    </div>
+    <div class="pages" id="pages" hidden>
+      <div class="pagebar">
+        <button type="button" class="rbtn" id="pgBack" aria-label="Back to calculator" title="Back to calculator"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button type="button" class="helpbtn" id="tHow" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>How it works</button>
+      </div>
+
+    <section class="page" id="statCard" aria-labelledby="stH">
+      <h1 id="stH">Statistics</h1>
+      <p class="lead">Averages, spread and a straight-line fit for your numbers. Tap any result to use it in the calculator.</p>
+      <div class="sec">
+        <div class="sh"><h2>Your numbers</h2></div>
+        <span class="tag" id="exTag">Example: years of schooling vs hourly wage. Replace with yours.</span>
+        <div class="inputs">
+          <label class="f" for="xs">x values<textarea id="xs" spellcheck="false"></textarea></label>
+          <label class="f" for="ys">y values (optional)<textarea id="ys" spellcheck="false"></textarea></label>
+        </div>
+        <p class="hint">Separate numbers with spaces, commas or new lines.</p>
+      </div>
+      <div id="stOut"></div>
+    </section>
+
+    <section class="page" id="tableCard" aria-labelledby="tH">
+      <h1 id="tH">Table</h1>
+      <p class="lead">Type a formula once, then pick what you want to see.</p>
+      <div class="feat" role="tablist" aria-label="Table features">
+        <button type="button" role="tab" data-feat="values" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Values</button>
+        <button type="button" role="tab" data-feat="graph" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M6 16c3-9 6-9 8-4s4 4 6-3"/></svg>Graph</button>
+        <button type="button" role="tab" data-feat="zeros" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20"/><path d="M4 19c3-14 13-14 16 0"/><circle cx="6.2" cy="12" r="1.6"/><circle cx="17.8" cy="12" r="1.6"/></svg>Zeros</button>
+        <button type="button" role="tab" data-feat="compare" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></svg>Compare</button>
+      </div>
+      <p class="fdesc" id="tDesc"></p>
+      <div class="sec">
+        <div class="sh"><h2 id="tFormH"><label for="tF">Your formula</label></h2></div>
+        <div class="fbox"><span>f(X) =</span><input type="text" id="tF" value="2X+1" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="2X+1"></div>
+        <div class="fbox" id="tGBox" hidden><span>g(X) =</span><input type="text" id="tG" value="X²" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="X²" aria-label="Second formula, g(X)"></div>
+        <div class="tkeys" aria-label="Insert into formula">
+          <button type="button" data-ins="X">X</button><button type="button" data-ins="²">x²</button><button type="button" data-ins="^">xʸ</button><button type="button" data-ins="√(">√</button><button type="button" data-ins="π">π</button><button type="button" data-ins="(">(</button><button type="button" data-ins=")">)</button><button type="button" data-ins="sin(">sin</button>
+        </div>
+        <p class="exl">Try an example</p>
+        <div class="tex"><button type="button">2X+1</button><button type="button">X²−4</button><button type="button">X³−3X</button><button type="button">√(X+4)</button></div>
+      </div>
+      <div class="sec">
+        <div class="sh"><h2 id="tRangeH">X values</h2></div>
+        <div class="range" id="tRange">
+          <label class="mini" for="tStart">From<input type="number" id="tStart" value="-2" step="any" inputmode="decimal"></label>
+          <label class="mini" for="tEnd">To<input type="number" id="tEnd" value="3" step="any" inputmode="decimal"></label>
+          <label class="mini" for="tStep" id="tStepBox">Step<input type="number" id="tStep" value="1" step="any" inputmode="decimal"></label>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sh"><h2 id="tOutH">Results</h2></div>
+        <div id="tOut" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="page" id="histCard" aria-labelledby="hH">
+      <div class="phead"><h1 id="hH">History</h1><button class="linkbtn" id="clrHist" type="button">Clear</button></div>
+      <p class="lead">Tap a calculation to use it again. Newest first, up to 30.</p>
+      <ul class="hist sec" id="hist"></ul>
+      <div class="sec" id="varsBox" hidden>
+        <div class="sh"><h2>Saved in memory</h2></div>
+        <div class="vars" id="vars"></div>
+        <p class="hint">Saved with SHIFT RCL (STO). Type one into a calculation with ALPHA and its letter.</p>
+      </div>
+    </section>
+
+    <section class="page" id="setCard" aria-labelledby="sH">
+      <h1 id="sH">Settings</h1>
+      <p class="lead">Saved on this device.</p>
+      <div class="newtip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg><p><b>New here?</b> Most people never need to change these. Keep the choices marked <b>Default</b> unless your teacher or your task asks for something else.</p></div>
+      <div class="sec">
+        <div class="sh"><h2>Angle unit</h2></div>
+        <p class="hint">How sin, cos and tan measure angles.</p>
+        <div class="seg two-line" id="setAngle" role="group" aria-label="Angle unit">
+          <button type="button" data-v="DEG">Degrees<small>Default</small></button><button type="button" data-v="RAD">Radians<small>Calculus</small></button><button type="button" data-v="GRA">Grads<small>Rarely used</small></button>
+        </div>
+        <p class="when" id="setAngleWhen"></p>
+        <div class="live" id="setAngleEx" aria-live="polite"></div>
+      </div>
+      <div class="sec">
+        <div class="sh"><h2>Number format</h2></div>
+        <p class="hint">How answers look on the screen. The answer itself never changes.</p>
+        <div class="seg two-line" id="setFmt" role="group" aria-label="Number format">
+          <button type="button" data-v="norm1">Norm 1<small>Tiny → ×10</small></button><button type="button" data-v="norm2">Norm 2<small>Default</small></button><button type="button" data-v="fix">Fix<small>Money</small></button><button type="button" data-v="sci">Sci<small>Science</small></button>
+        </div>
+        <p class="when" id="setFmtWhen"></p>
+        <label class="mini digits" id="setDigWrap" for="setDig"><span id="setDigL">Digits</span><select id="setDig"></select></label>
+        <div class="live" id="setFmtEx" aria-live="polite"></div>
+      </div>
+      <div class="sec rows">
+        <button type="button" class="srow" id="setDefault"><span><b id="setDefT">Reset settings to default</b><small id="setDefS">Strange sin or cos answers? Go back to Degrees and Norm 2.</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+        <button type="button" class="srow" id="setStats"><span>Statistics<small>Average, middle value, spread and a straight-line fit for a list of numbers.</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button type="button" class="srow" id="setReset"><span><b id="setResetT">Clear memory and history</b><small id="setResetS">Deletes saved numbers and your History. Asks first.</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </section>
+      <div class="helpov" id="tHelp" hidden>
+        <div class="helpsheet" role="dialog" aria-modal="true" aria-labelledby="tHelpH">
+          <div class="helphead"><h2 id="tHelpH">How it works</h2><button type="button" class="rbtn" id="tHelpX" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="demo" id="tDemo" aria-hidden="true"></div>
+          <p class="demcap" id="tDemoCap" aria-live="polite"></p>
+          <ol class="demsteps" id="tDemoSteps"></ol>
+          <button type="button" class="okbtn" id="tHelpOk">Got it</button>
+        </div>
+      </div>
+    </div>
+    <nav class="tools" aria-label="App">
+      <button type="button" class="tool" id="goGuide"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.9"/><path d="M12 17.2h.01"/></svg>Guide</button>
+      <button type="button" class="tool" id="goHist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>History</button>
+      <button type="button" class="tool" id="goCalc"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7v3h-7z"/><path d="M8.5 13.5h.01M12 13.5h.01M15.5 13.5h.01M8.5 17.5h.01M12 17.5h.01M15.5 17.5h.01"/></svg>Calculator</button>
+      <button type="button" class="tool" id="goTable"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Table</button>
+      <button type="button" class="tool" id="goSet" title="Angle unit and number format"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>Settings</button>
+    </nav>
+  </section>
+</div>
+
+<script>
+(() => {
+  // =============== state ===============
+  let root = [], cur = { seq: root, pos: 0 };
+  let evaluated = false, err = null, note = null;
+  let ans = 0, preAns = 0;
+  const vars = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 };
+  const VARN = { A: 'va', B: 'vb', C: 'vc', D: 'vd', E: 've', F: 'vf', X: 'vx', Y: 'vy', M: 'mem' };
+  let angle = 'DEG', disp = { t: 'norm', n: 2 };
+  let shift = false, alpha = false, hyp = false, sto = false, rcl = false, insArg = false, off = false;
+  let menu = null, view = { t: 'norm' }, extra = null, histIdx = -1;
+  let draft = null;   // what was being typed when ▲ started browsing history; ▼ past the newest brings it back
+  let demo = false;   // the example on first visit: the first key typed replaces it instead of adding to it
+  let history = [];
+
+  const save = () => { try { localStorage.setItem('hesap-v2', JSON.stringify({ vars, angle, disp, ans, preAns, history: history.slice(0, 30) })); } catch (e) {} };
+  const load = () => { try { const s = JSON.parse(localStorage.getItem('hesap-v2') || 'null'); if (!s) return; Object.assign(vars, s.vars || {}); angle = ['DEG', 'RAD', 'GRA'].includes(s.angle) ? s.angle : 'DEG'; if (s.disp) disp = s.disp.t === 'norm' ? { t: 'norm', n: s.disp.n === 1 ? 1 : 2 } : s.disp; ans = +s.ans || 0; preAns = +s.preAns || 0; history = Array.isArray(s.history) ? s.history : []; } catch (e) {} };
+
+  // =============== math engine ===============
+  const SE = () => { throw { kind: 'Syntax' }; };
+  const ME = () => { throw { kind: 'Math' }; };
+  const fin = v => { if (!Number.isFinite(v)) ME(); return v; };   // any overflow along the way is a Math ERROR
+  const NAMES = ['asinh','acosh','atanh','sinh','cosh','tanh','asin','acos','atan','sin','cos','tan','sqrt','root','logb','log','ln','exp','abs','gcd','lcm','intg','int','rnd','ranint','ran','pol','rec','pans','ans','mem','pi','e','va','vb','vc','vd','ve','vf','vx','vy'].sort((a, b) => b.length - a.length);
+  const ARITY = { root: 2, logb: 2, gcd: 2, lcm: 2, pol: 2, rec: 2, ranint: 2 };
+  const TODEG = { DEG: 1, RAD: 180 / Math.PI, GRA: 0.9 };
+  const TRIG_MAX = { DEG: 9e9, RAD: 157079632.7, GRA: 1e10 };   // Casio input range for sin/cos/tan
+
+  function tokenize(s) {
+    const t = []; let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (c === ' ') { i++; continue; }   // separates names, so Ran# then Int( is not read as RanInt(
+      if (/[0-9.]/.test(c)) {
+        const m = s.slice(i).match(/^(\d+\.?\d*|\.\d*)/);
+        i += m[0].length;
+        if (s[i] === '.') SE();
+        t.push({ t: 'num', v: m[0] === '.' ? 0 : parseFloat(m[0]) });   // a lone "." is 0, like on a phone calculator
+      } else if (/[a-z]/.test(c)) {
+        const n = NAMES.find(n => s.startsWith(n, i));
+        if (!n) SE();
+        t.push({ t: 'id', v: n }); i += n.length;
+      } else if ('+-*/^()!~PCEIR,%°\'"δργ'.includes(c)) { t.push({ t: 'op', v: c }); i++; }
+      else SE();
+    }
+    return t;
+  }
+
+  const isInt = x => Number.isFinite(x) && Math.abs(x - Math.round(x)) < 1e-9;
+  function fact(n) { if (!isInt(n) || n < 0 || n > 170) ME(); n = Math.round(n); let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+  function nPr(n, r) { if (!isInt(n) || !isInt(r) || r < 0 || r > n) ME(); let v = 1; for (let i = 0; i < r; i++) v *= (n - i); return v; }
+  function nCr(n, r) { if (!isInt(n) || !isInt(r) || r < 0 || r > n) ME(); r = Math.min(r, n - r); let v = 1; for (let i = 1; i <= r; i++) v = v * (n - r + i) / i; return Math.round(v); }
+  function gcd(a, b) { if (!isInt(a) || !isInt(b)) ME(); a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b)); while (b) [a, b] = [b, a % b]; return a; }
+  function pow(b, e) {
+    if (b === 0 && e <= 0) ME();
+    if (b < 0 && isInt(e)) e = Math.round(e);   // (−2)^(0.1×30): 3.0000000000000004 must count as 3
+    // a negative base needs an integer power or one of the form m/(odd), e.g. (−8)^(2/3) = 4
+    if (b < 0 && !isInt(e)) { const f = toFrac(e); if (!f || f.d % 2 === 0) ME(); return fin((Math.abs(f.n) % 2 ? -1 : 1) * Math.pow(-b, e)); }
+    return fin(Math.pow(b, e));
+  }
+  const unrad = x => x * 180 / Math.PI / TODEG[angle];
+  // sin and cos of an angle in degrees, folded into ±45° so exact angles give exact 0 / ±1 and tiny angles keep full precision
+  function sinCosDeg(d) {
+    const r = d % 360, q = Math.round(r / 90);
+    let e = r - 90 * q;
+    // keep 15 significant digits of r, so binary noise in e.g. 90.000001 does not reach the 10th digit of cos
+    if (r) { const unit = Math.pow(10, Math.floor(Math.log10(Math.abs(r))) - 14); e = Math.round(e / unit) * unit; }
+    e = e * Math.PI / 180;
+    const s = Math.sin(e), c = Math.cos(e);
+    switch (((q % 4) + 4) % 4) {
+      case 0: return [s, c];
+      case 1: return [c, -s];
+      case 2: return [-s, -c];
+      default: return [-c, s];
+    }
+  }
+  function trig(f, x) {
+    if (Math.abs(x) >= TRIG_MAX[angle]) ME();
+    let d = x * TODEG[angle];
+    if (angle === 'RAD') {
+      const k = Math.round(x / (Math.PI / 2));
+      if (k !== 0 && Math.abs(x - k * Math.PI / 2) <= 1e-12 * Math.abs(x)) d = 90 * k;   // a multiple of π/2
+      else return fin(Math[f](x));
+    }
+    const [s, c] = sinCosDeg(d);
+    if (f === 'sin') return s;
+    if (f === 'cos') return c;
+    if (c === 0) ME();
+    return s / c;
+  }
+  // round half away from zero to n decimals (or n significant digits), using the 15-digit decimal value so 1.005 → 1.01
+  function decRound(x, n, sig) {
+    if (!x || !Number.isFinite(x)) return x;
+    const [m, ex] = Math.abs(x).toExponential(14).split('e');
+    const keep = sig ? n : n + (+ex) + 1;
+    if (keep >= 15) return x;
+    const div = 10n ** BigInt(15 - keep);
+    const r = (BigInt(m.replace('.', '')) + div / 2n) / div;
+    return Math.sign(x) * parseFloat(`${r}e${+ex + 1 - keep}`);
+  }
+  function rnd(x) {
+    if (disp.t === 'fix') return decRound(x, disp.n, false);
+    return decRound(x, disp.t === 'sci' ? disp.n : 10, true);
+  }
+  function applyFn(f, a) {
+    const x = a[0], y = a[1];
+    switch (f) {
+      case 'sin': case 'cos': case 'tan': return trig(f, x);
+      case 'asin': case 'acos': if (Math.abs(x) > 1) ME(); return unrad(Math[f](x));
+      case 'atan': return unrad(Math.atan(x));
+      case 'sinh': case 'cosh': case 'tanh': case 'asinh': return Math[f](x);
+      case 'acosh': if (x < 1) ME(); return Math.acosh(x);
+      case 'atanh': if (Math.abs(x) >= 1) ME(); return Math.atanh(x);
+      case 'sqrt': if (x < 0) ME(); return Math.sqrt(x);
+      case 'root': if (x === 0) ME(); return pow(y, 1 / x);
+      case 'log': if (x <= 0) ME(); return Math.log10(x);
+      case 'logb': if (x <= 0 || x === 1 || y <= 0) ME(); return Math.log(y) / Math.log(x);
+      case 'ln': if (x <= 0) ME(); return Math.log(x);
+      case 'exp': return Math.exp(x);
+      case 'abs': return Math.abs(x);
+      case 'gcd': return gcd(x, y);
+      case 'lcm': { const g = gcd(x, y); return g === 0 ? 0 : Math.abs(Math.round(x) * Math.round(y)) / g; }
+      case 'int': return Math.trunc(x);
+      case 'intg': return Math.floor(x);
+      case 'rnd': return rnd(x);
+      case 'ranint': { if (!isInt(x) || !isInt(y) || x > y) ME(); return Math.round(x) + Math.floor(Math.random() * (Math.round(y) - Math.round(x) + 1)); }
+      case 'pol': { const r = Math.hypot(x, y), th = unrad(Math.atan2(y, x)); vars.X = r; vars.Y = th; extra = { t: 'pair', a: ['r', r], b: ['θ', th] }; return r; }
+      case 'rec': { const px = x * trig('cos', y), py = x * trig('sin', y); vars.X = px; vars.Y = py; extra = { t: 'pair', a: ['x', px], b: ['y', py] }; return px; }
+    }
+    SE();
+  }
+
+  function evaluateStr(src) {
+    let open = 0; for (const ch of src) { if (ch === '(') open++; else if (ch === ')') open--; if (open < 0) SE(); }
+    src += ')'.repeat(open);
+    const T = tokenize(src); let p = 0, depth = 0, rem = null;
+    const peek = () => T[p];
+    const is = (tok, v) => tok && tok.t === 'op' && tok.v === v;
+    const isNum = tok => tok && tok.t === 'num';
+    const startsPrimary = tok => tok && (tok.t === 'num' || tok.t === 'id' || is(tok, '(') || is(tok, '~'));
+
+    // Priority follows Casio's table, lowest first: + − | × ÷ ÷R | nPr nCr | omitted × | (−) | x² xʸ ! % °′″ (left to right)
+    // a term like "15%" or "(5+10)%" with no × ÷ of its own: in a + − b% it means b% of a (phone-style, 80+15% = 92)
+    function plainPercent(a, b) {
+      if (!is(T[b - 1], '%')) return false;
+      for (let k = a, d = 0; k < b; k++) {
+        const t = T[k];
+        if (is(t, '(')) d++; else if (is(t, ')')) d--;
+        else if (d === 0 && t.t === 'op' && '*/RPC'.includes(t.v)) return false;
+      }
+      return true;
+    }
+    function expr() {
+      let v = term(), terms = 1;
+      while (is(peek(), '+') || is(peek(), '-')) {
+        const o = T[p++].v, p0 = p;
+        let r = term();
+        if (plainPercent(p0, p)) r = fin(v * r);
+        v = fin(o === '+' ? v + r : v - r); terms++;
+      }
+      if (depth === 0 && terms > 1) rem = null;   // a remainder is only shown when ÷R is the whole calculation
+      return v;
+    }
+    function term() {
+      let v = perm(), ops = 0, r = null;
+      for (;;) {
+        const tok = peek();
+        if (is(tok, '*')) { p++; v = fin(v * perm()); }
+        else if (is(tok, '/')) { p++; const d = perm(); if (d === 0) ME(); v = fin(v / d); }
+        else if (is(tok, 'R')) { p++; const q = divRem(v, perm()); v = q.v; r = q.r; }
+        else break;
+        ops++;
+      }
+      if (depth === 0 && ops === 1 && r !== null) rem = r;
+      return v;
+    }
+    // ÷R: inside a longer calculation only the quotient carries on; if the quotient is not a positive integer
+    // (negative or non-integer values) it is ordinary division, as on the Casio
+    function divRem(a, b) {
+      if (b === 0) ME();
+      const q = Math.floor(a / b);
+      if (!isInt(a) || !isInt(b) || a < 0 || b < 0 || q < 1) return { v: fin(a / b), r: null };
+      return { v: q, r: Math.round(a) - q * Math.round(b) };
+    }
+    function perm() {
+      let v = implied();
+      while (is(peek(), 'P') || is(peek(), 'C')) { const o = T[p++].v; const r = implied(); v = fin(o === 'P' ? nPr(v, r) : nCr(v, r)); }
+      return v;
+    }
+    // multiplication with the sign left out (2π, 2(1+2), 3sin(30)) is done before × and ÷: 6÷2(1+2) = 1
+    function implied() {
+      let v = unary();
+      while (startsPrimary(peek())) v = fin(v * unary());
+      return v;
+    }
+    function unary() {
+      const tok = peek();
+      if (is(tok, '-') || is(tok, '~')) { p++; return -unary(); }
+      if (is(tok, '+')) { p++; return unary(); }
+      return postfix();
+    }
+    // the power's exponent: an optional sign and one primary (the template always brackets it)
+    function operand() {
+      const tok = peek();
+      if (is(tok, '-') || is(tok, '~')) { p++; return -operand(); }
+      if (is(tok, '+')) { p++; return operand(); }
+      return primary();
+    }
+    // ×10ˣ takes a signed number
+    function tenExp() {
+      let s = 1;
+      while (is(peek(), '-') || is(peek(), '~') || is(peek(), '+')) { if (!is(T[p], '+')) s = -s; p++; }
+      if (!isNum(peek())) SE();
+      return s * T[p++].v;
+    }
+    function dmsTail(v) {
+      if (isNum(T[p]) && is(T[p + 1], "'")) { v += T[p].v / 60; p += 2; }
+      if (isNum(T[p]) && is(T[p + 1], '"')) { v += T[p].v / 3600; p += 2; }
+      return v;
+    }
+    function postfix() {
+      let v = primary();
+      for (;;) {
+        const tok = peek();
+        if (is(tok, '^')) { p++; v = pow(v, operand()); }
+        else if (is(tok, 'E')) { p++; v = fin(v * Math.pow(10, tenExp())); }
+        else if (is(tok, '!')) { p++; v = fact(v); }
+        else if (is(tok, 'I')) { p++; if (v === 0) ME(); v = fin(1 / v); }
+        else if (is(tok, '%')) { p++; v = v / 100; }
+        else if (is(tok, '°')) { p++; v = dmsTail(v); }
+        else if (is(tok, "'")) { p++; v = v / 60; if (isNum(T[p]) && is(T[p + 1], '"')) { v += T[p].v / 3600; p += 2; } }
+        else if (is(tok, '"')) { p++; v = v / 3600; }
+        else if (is(tok, 'δ')) { p++; v = v * TODEG.DEG / TODEG[angle]; }
+        else if (is(tok, 'ρ')) { p++; v = v * TODEG.RAD / TODEG[angle]; }
+        else if (is(tok, 'γ')) { p++; v = v * TODEG.GRA / TODEG[angle]; }
+        else break;
+      }
+      return v;
+    }
+    function primary() {
+      const at = p, tok = T[p++];
+      if (!tok) SE();
+      if (tok.t === 'num') return tok.v;
+      if (is(tok, 'E')) { p--; return 1; }   // ×10ˣ with no number in front means 1×10ˣ
+      if (tok.t === 'id') {
+        const id = tok.v;
+        const consts = { pi: Math.PI, e: Math.E, ans, pans: preAns, mem: vars.M, va: vars.A, vb: vars.B, vc: vars.C, vd: vars.D, ve: vars.E, vf: vars.F, vx: vars.X, vy: vars.Y };
+        if (id in consts) return consts[id];
+        if (id === 'ran') return Math.round(Math.random() * 1000) / 1000;
+        if (!is(T[p], '(')) SE(); p++; depth++;
+        const args = [expr()];
+        while (is(T[p], ',')) { p++; args.push(expr()); }
+        if (!is(T[p], ')')) SE(); p++; depth--;
+        if (args.length !== (ARITY[id] || 1)) SE();
+        if ((id === 'pol' || id === 'rec') && (at !== 0 || p !== T.length)) SE();   // Pol/Rec must be the whole calculation
+        return fin(applyFn(id, args));
+      }
+      if (is(tok, '(')) { depth++; const v = expr(); if (!is(T[p], ')')) SE(); p++; depth--; return v; }
+      SE();
+    }
+    if (!T.length) SE();
+    const v = expr();
+    if (p !== T.length) SE();
+    if (rem !== null) extra = { t: 'rem', r: rem };
+    return fin(v);
+  }
+
+  // =============== formatting ===============
+  const minus = s => s.replace(/^-/, '−');
+  const expHTML = (m, e, html) => { e = minus(String(e)); return html ? `${m}<span class="x10">×10</span><sup>${e}</sup>` : `${m}×10^${e}`; };
+  // a value with at most 10 significant digits, written without exponent form
+  const plain = v => /e/.test(String(v)) ? v.toFixed(20).replace(/\.?0+$/, '') : String(v);
+  // thousands separators in the whole-number part: 123456700 → 123,456,700
+  const thousands = s => s.replace(/^(−?)(\d+)/, (m, sg, d) => sg + d.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+  function fmt(x, html) {
+    if (Object.is(x, -0) || Math.abs(x) < 1e-99) x = 0;
+    if (disp.t === 'sci') {
+      const [m, e] = decRound(x, disp.n, true).toExponential(disp.n - 1).split('e');
+      return expHTML(minus(m), +e, html);
+    }
+    if (disp.t === 'fix') {
+      const v = decRound(x, disp.n, false);
+      if (Math.abs(v) < 1e10) { const s = v.toFixed(disp.n); return thousands(minus(/^-0\.?0*$/.test(s) ? s.slice(1) : s)); }
+    }
+    // Norm: 10 significant digits; exponent form from 10^10 up, and below 10^-2 (Norm 1) or 10^-9 (Norm 2)
+    const v = decRound(x, 10, true), a = Math.abs(v);
+    const lo = disp.t === 'norm' && disp.n === 1 ? 1e-2 : 1e-9;
+    if (a !== 0 && (a >= 1e10 || a < lo)) {
+      const [m, e] = v.toExponential(9).split('e');
+      return expHTML(minus(m.replace(/\.?0+$/, '')), +e, html);
+    }
+    return thousands(minus(plain(v)));
+  }
+  function toFrac(x, maxD = 99999) {
+    if (!Number.isFinite(x) || isInt(x)) return null;
+    const sign = x < 0 ? -1 : 1; x = Math.abs(x);
+    let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = x;
+    for (let i = 0; i < 40; i++) {
+      const a = Math.floor(b);
+      [h1, h0] = [a * h1 + h0, h1];
+      [k1, k0] = [a * k1 + k0, k1];
+      if (k1 > maxD) return null;
+      // relative test: an absolute one let small irrational values pass as fractions (√3÷100000 → 1/57735)
+      if (Math.abs(x - h1 / k1) <= 1e-13 * x) return { n: sign * h1, d: k1 };
+      const rest = b - a; if (rest < 1e-15) break; b = 1 / rest;
+    }
+    return null;
+  }
+  // a fraction is shown only if whole part, numerator, denominator and separators fit in 10 digits (Casio rule)
+  function fracFits(x, mixed) {
+    const f = toFrac(x); if (!f) return null;
+    const N = Math.abs(f.n), w = mixed ? Math.floor(N / f.d) : 0;
+    const len = w ? String(w).length + String(N - w * f.d).length + String(f.d).length + 2 : String(N).length + String(f.d).length + 1;
+    return len <= 10 ? f : null;
+  }
+  const stackHTML = (n, d) => `<span class="frac"><span class="n">${n}</span><span class="d">${d}</span></span>`;
+  function fracHTML(x, mixed) {
+    const f = fracFits(x, mixed); if (!f) return fmt(x, true);
+    const sg = f.n < 0 ? '−' : ''; const N = Math.abs(f.n);
+    if (mixed && N > f.d) { const w = Math.floor(N / f.d); return `${sg}${w}${stackHTML(N - w * f.d, f.d)}`; }
+    return sg + stackHTML(N, f.d);
+  }
+  function dmsHTML(x) {
+    const sg = x < 0 ? '−' : ''; let a = Math.abs(x);
+    let d = Math.floor(a), mf = (a - d) * 60, m = Math.floor(mf), s = (mf - m) * 60;
+    s = Math.round(s * 100) / 100;
+    if (s >= 60) { s -= 60; m++; } if (m >= 60) { m -= 60; d++; }
+    return `${sg}${d}°${m}′${parseFloat(s.toFixed(2))}″`;
+  }
+  function factHTML(x) {
+    let n = Math.round(x);
+    if (n < 2) return String(n);
+    const parts = [];
+    for (let p = 2; p * p <= n; p += (p === 2 ? 1 : 2)) { let c = 0; while (n % p === 0) { n /= p; c++; } if (c) parts.push(c > 1 ? `${p}<sup>${c}</sup>` : `${p}`); }
+    if (n > 1) parts.push(String(n));
+    return parts.join('×');
+  }
+
+  // =============== editor (natural display tree) ===============
+  // A sequence is an array of items. Token: {k:'t', d, v}. Template: {k, s:[slot sequences]}.
+  const tok = (d, v) => ({ k: 't', d, v });
+  const clone = x => JSON.parse(JSON.stringify(x));
+  function setRoot(r) { root = r; cur = { seq: root, pos: root.length }; }
+  function locate(target, seq = root) {
+    for (let i = 0; i < seq.length; i++) {
+      const it = seq[i]; if (!it.s) continue;
+      for (let j = 0; j < it.s.length; j++) {
+        if (it.s[j] === target) return { pseq: seq, i, j, item: it };
+        const r = locate(target, it.s[j]); if (r) return r;
+      }
+    }
+    return null;
+  }
+  // v: the token about to be typed (if any)
+  function prep(kind, v) {
+    histIdx = -1; note = null; draft = null;
+    if (demo) { demo = false; setRoot([]); }
+    // an operator on an empty screen carries on from the last answer (× 2 → Ans×2); − still starts a negative
+    // number, ×10ˣ still means 1×10ˣ, and ) or °′″ have nothing to attach to
+    if (!evaluated && !err && !root.length && (kind === 'op' || kind === 'post') && !['-', 'E', ')', '°'].includes(v)) {
+      setRoot([tok('Ans', 'ans')]);
+      return true;
+    }
+    if (evaluated || err) {
+      const wasErr = !!err;
+      evaluated = false; err = null; view = { t: 'norm' }; extra = null;
+      if (!wasErr && (kind === 'op' || kind === 'post')) {
+        // carry on from the number on screen, even when it is an older one brought back with ▲
+        if (lastShown !== ans) { preAns = ans; ans = lastShown; save(); }
+        setRoot([tok('Ans', 'ans')]);
+      }
+      else setRoot([]);
+      return !wasErr;
+    }
+    return false;
+  }
+  function place(item) { cur.seq.splice(cur.pos, 0, item); cur.pos++; }
+  // SHIFT INS (Natural Display): the value right of the cursor becomes the argument of the next function.
+  // It runs up to the next operator or function; if it starts with "(" or a function it takes that whole bracket group.
+  function grabArg() {
+    if (!insArg) return null;
+    insArg = false;
+    const s = cur.seq; let i = cur.pos;
+    if (i < s.length && s[i].k === 't' && s[i].v.endsWith('(')) {
+      for (let open = 0; i < s.length; i++) {
+        const it = s[i]; if (it.k !== 't') continue;
+        if (it.v.endsWith('(')) open++;
+        else if (it.v === ')' && --open === 0) { i++; break; }
+      }
+    } else {
+      while (i < s.length && !(s[i].k === 't' && (/^[-+*\/PCR,()~]$/.test(s[i].v) || s[i].v.endsWith('(')))) i++;
+    }
+    return s.splice(cur.pos, i - cur.pos);
+  }
+  function insTok(d, v, kind = 'start') {
+    prep(kind, v);
+    const arg = v.endsWith('(') ? grabArg() : null;
+    place(tok(d, v));
+    if (arg && arg.length) { arg.forEach(place); place(tok(')', ')')); }
+  }
+  // enter: slot index to put the cursor in, or 'after'; argSlot: the slot SHIFT INS fills
+  function insTpl(k, slots, enter, kind = 'start', argSlot) {
+    prep(kind);
+    const arg = argSlot != null ? grabArg() : null;
+    if (arg && arg.length) { slots[argSlot].push(...arg); const empty = slots.findIndex(s => !s.length); enter = empty < 0 ? 'after' : empty; }
+    const item = { k, s: slots };
+    cur.seq.splice(cur.pos, 0, item);
+    if (enter === 'after') cur.pos++;
+    else cur = { seq: item.s[enter], pos: item.s[enter].length };
+  }
+  // right after a result the answer goes in first (numerator, or the whole-number part of a mixed fraction)
+  function insFrac(k) {
+    const fromAns = (evaluated && !err);
+    prep('start');
+    const slots = k === 'frac' ? [[], []] : [[], [], []];
+    if (fromAns) slots[0].push(tok('Ans', 'ans'));
+    insTpl(k, slots, fromAns ? 1 : 0, 'start', k === 'frac' && !fromAns ? 0 : undefined);
+  }
+  function enterEdit(atStart) {
+    histIdx = -1; draft = null; demo = false;
+    if (err) { err = null; evaluated = false; return; }
+    evaluated = false; view = { t: 'norm' }; extra = null; note = null;
+    cur = { seq: root, pos: atStart ? 0 : root.length };
+  }
+  function right() {
+    if (evaluated || err) return enterEdit(true && !err);
+    const seq = cur.seq, pos = cur.pos;
+    if (pos < seq.length) { const it = seq[pos]; if (it.s) cur = { seq: it.s[0], pos: 0 }; else cur.pos++; return; }
+    if (seq === root) { cur.pos = 0; return; }
+    const L = locate(seq);
+    if (L.j < L.item.s.length - 1) cur = { seq: L.item.s[L.j + 1], pos: 0 };
+    else cur = { seq: L.pseq, pos: L.i + 1 };
+  }
+  function left() {
+    if (evaluated || err) return enterEdit(false);
+    const seq = cur.seq, pos = cur.pos;
+    if (pos > 0) { const it = seq[pos - 1]; if (it.s) { const last = it.s[it.s.length - 1]; cur = { seq: last, pos: last.length }; } else cur.pos--; return; }
+    if (seq === root) { cur.pos = root.length; return; }
+    const L = locate(seq);
+    if (L.j > 0) { const pv = L.item.s[L.j - 1]; cur = { seq: pv, pos: pv.length }; }
+    else cur = { seq: L.pseq, pos: L.i };
+  }
+  function vert(dir) {
+    if (!evaluated && !err && cur.seq !== root) {
+      let s = cur.seq;
+      while (s !== root) {
+        const L = locate(s); const nj = L.j + dir;
+        if (L.item.k !== 'pow' && nj >= 0 && nj < L.item.s.length) { const t = L.item.s[nj]; cur = { seq: t, pos: Math.min(cur.pos, t.length) }; return; }
+        s = L.pseq;
+      }
+      return;
+    }
+    // at top level: ▲ steps to older calculations, ▼ to newer ones. histIdx is the entry on screen
+    // (0 = the result just calculated); what was being typed is kept and comes back after the newest.
+    if (!history.length) return;
+    const i = histIdx < 0 ? (dir < 0 ? 0 : -1) : histIdx + (dir < 0 ? 1 : -1);
+    if (i >= history.length) return;   // already at the oldest
+    if (i < 0) {
+      if (histIdx < 0 || !draft) return;   // nothing newer
+      root = draft; cur = { seq: root, pos: root.length }; draft = null; histIdx = -1;
+      evaluated = false; err = null; extra = null; note = null; view = { t: 'norm' };
+      return;
+    }
+    if (histIdx < 0) draft = !evaluated && !err && root.length ? root : null;
+    demo = false; histIdx = i;
+    const h = history[i];
+    root = clone(h.root); cur = { seq: root, pos: root.length };
+    err = null; extra = null; note = null; evaluated = true; view = defaultView(h.r, root); lastShown = h.r;
+  }
+  const vertUp = () => vert(-1), vertDown = () => vert(1);
+  function del() {
+    demo = false;
+    if (evaluated || err) { enterEdit(false); return; }
+    const seq = cur.seq, pos = cur.pos;
+    if (pos > 0) {
+      const it = seq[pos - 1];
+      if (!it.s) { seq.splice(pos - 1, 1); cur.pos--; return; }
+      if (it.s.every(s => !s.length)) { seq.splice(pos - 1, 1); cur.pos--; return; }
+      const last = it.s[it.s.length - 1];
+      cur = { seq: last, pos: last.length };
+      if (last.length) del();
+      return;
+    }
+    if (seq === root) return;
+    const L = locate(seq);
+    if (L.item.s.every(s => !s.length)) { L.pseq.splice(L.i, 1); cur = { seq: L.pseq, pos: L.i }; return; }
+    if (L.j > 0) { const pv = L.item.s[L.j - 1]; cur = { seq: pv, pos: pv.length }; return; }
+    const flat = [].concat(...L.item.s);
+    L.pseq.splice(L.i, 1, ...flat);
+    cur = { seq: L.pseq, pos: L.i };
+  }
+
+  // compile tree -> engine string
+  function comp(seq) {
+    if (!seq.length) throw { kind: 'Syntax', slot: seq };
+    return seq.map(it => {
+      switch (it.k) {
+        case 't': return /^[a-z]/.test(it.v) ? ' ' + it.v : it.v;   // space keeps neighbouring names apart
+        case 'frac': return `((${comp(it.s[0])})/(${comp(it.s[1])}))`;
+        case 'mixed': return `((${comp(it.s[0])})+(${comp(it.s[1])})/(${comp(it.s[2])}))`;
+        case 'pow': return `^(${comp(it.s[0])})`;
+        case 'sqrt': return ` sqrt(${comp(it.s[0])})`;
+        case 'root': return ` root(${comp(it.s[0])},${comp(it.s[1])})`;
+        case 'logb': return ` logb(${comp(it.s[0])},${comp(it.s[1])})`;
+        case 'abs': return ` abs(${comp(it.s[0])})`;
+      }
+      return '';
+    }).join('');
+  }
+  const flat = seq => seq.flatMap(it => it.s ? [it, ...it.s.flatMap(flat)] : [it]);
+  const DMS_MARKS = ['°', "'", '"'];
+  // plain arithmetic on °′″ values: + − between them, or × ÷ by an ordinary number (× ÷ between two °′″ values gives a decimal)
+  function dmsArithmetic(all) {
+    if (!all.some(it => DMS_MARKS.includes(it.v)) || !all.every(it => it.k === 't' && /^([0-9.+\-*\/()~°'"])$/.test(it.v))) return false;
+    const groups = [], ops = []; let g = [];
+    all.forEach(t => { if (/^[+\-*\/]$/.test(t.v) && g.length) { groups.push(g); ops.push(t.v); g = []; } else g.push(t); });
+    groups.push(g);
+    const hasMark = gr => gr.some(t => DMS_MARKS.includes(t.v));
+    return !ops.some((o, i) => (o === '*' || o === '/') && hasMark(groups[i]) && hasMark(groups[i + 1]));
+  }
+  // How a fresh result is shown (Natural Display):
+  //  - plain arithmetic on °′″ values stays in °′″
+  //  - an exact answer that fits as a fraction is shown as one (1÷4 → 1/4, sin 30 → 1/2),
+  //    except when decimals were typed (2.54×3 stays 7.62); S⇔D still switches either way
+  function defaultView(v, r) {
+    const all = flat(r), toks = all.filter(it => it.k === 't');
+    if (dmsArithmetic(all) && Math.abs(v) < 1e7) return { t: 'dms' };
+    const decIn = toks.some(it => it.v.includes('.') || ['E', '%', 'ran', 'rnd('].includes(it.v));   // % answers are decimals too
+    if (!decIn && fracFits(v, false)) return { t: 'frac', mixed: false };
+    return { t: 'norm' };
+  }
+
+  let lastShown = 0; // value currently on screen (ans, or a recalled history value)
+  function doEval() {
+    if (!root.length) return false;
+    let src;
+    try { src = comp(root); }
+    catch (e) { if (e.slot) cur = { seq: e.slot, pos: 0 }; err = 'Syntax'; evaluated = true; return false; }
+    extra = null;
+    try {
+      const v = evaluateStr(src);
+      preAns = ans; ans = v; lastShown = v;
+      evaluated = true; err = null; note = null; histIdx = 0; draft = null; demo = false;
+      view = defaultView(v, root);
+      // reopening a history entry (or pressing = again) must not stack identical copies on top
+      const top = history[0];
+      if (!top || top.r !== v || JSON.stringify(top.root) !== JSON.stringify(root)) history.unshift({ root: clone(root), r: v });
+      history = history.slice(0, 30);
+      save(); renderHistory(); renderVars();
+      return true;
+    } catch (e) {
+      err = (e && e.kind === 'Math') ? 'Math' : 'Syntax'; evaluated = true; extra = null;
+      cur = { seq: root, pos: root.length };
+      return false;
+    }
+  }
+  function acAll() {
+    setRoot([]); evaluated = false; err = null; note = null; view = { t: 'norm' }; extra = null;
+    shift = alpha = hyp = sto = rcl = insArg = false; menu = null; histIdx = -1; draft = null; demo = false;
+  }
+  function memAdd(sign) {
+    if (!evaluated && root.length) { if (!doEval()) return; }
+    else if (err || !evaluated) return;
+    vars.M += sign * lastShown; note = sign > 0 ? 'M+' : 'M−'; save(); renderVars();
+  }
+  function doSto(L) {
+    if (!evaluated && root.length) { if (!doEval()) return; }
+    if (err) return;
+    vars[L] = evaluated ? lastShown : ans;
+    if (!evaluated) { evaluated = true; view = { t: 'norm' }; lastShown = vars[L]; }
+    note = `Ans→${L}`; save(); renderVars();
+  }
+  const showingResult = () => evaluated && !err;
+  function sdKey() {
+    if (!showingResult()) return;
+    if (view.t === 'frac') view = { t: 'norm' };
+    else if (fracFits(lastShown, false)) view = { t: 'frac', mixed: false };
+  }
+  function mixedKey() {
+    if (!showingResult()) return;
+    const mixed = !(view.t === 'frac' && view.mixed);
+    if (fracFits(lastShown, mixed)) view = { t: 'frac', mixed };
+  }
+  function engKey(dir) {
+    if (!showingResult()) return;
+    const a = Math.abs(lastShown);
+    const base = a === 0 ? 0 : 3 * Math.floor(Math.floor(Math.log10(a)) / 3);
+    if (view.t === 'eng') view = { t: 'eng', e: view.e + 3 * dir };
+    else view = { t: 'eng', e: base + (dir > 0 ? 3 : 0) };
+  }
+  function dmsKey() {
+    if (showingResult()) { view = view.t === 'dms' ? { t: 'norm' } : { t: 'dms' }; return; }
+    // choose ° then ′ then ″ depending on what this number already has
+    prep('post', '°');
+    let mark = '°';
+    for (let i = cur.pos - 1; i >= 0; i--) {
+      const it = cur.seq[i]; if (it.k !== 't') break;
+      if (it.v === '°') { mark = "'"; break; }
+      if (it.v === "'") { mark = '"'; break; }
+      if (it.v === '"') break;
+      if (!/^[0-9.]$/.test(it.v)) break;
+    }
+    place(tok(mark === "'" ? '′' : mark === '"' ? '″' : '°', mark));
+  }
+  function factKey() {
+    if (!showingResult()) return;
+    // only a positive integer of up to 10 digits, and not a ÷R / Pol / Rec result
+    if (extra || !isInt(lastShown) || lastShown < 1 || lastShown >= 1e10) { err = 'Math'; return; }
+    view = { t: 'fact' };
+  }
+
+  // =============== menus ===============
+  function openMenu(title, items) { menu = { title, items }; }
+  const angleItems = () => [
+    { l: '1:Deg', act: () => { angle = 'DEG'; save(); } },
+    { l: '2:Rad', act: () => { angle = 'RAD'; save(); } },
+    { l: '3:Gra', act: () => { angle = 'GRA'; save(); } },
+  ];
+  function setupMenu() {
+    openMenu('SETUP', [
+      ...angleItems(),
+      { l: '4:Fix', act: () => { menu = { prompt: 'Fix 0~9?', digit: d => { disp = { t: 'fix', n: d }; save(); } }; return true; } },
+      { l: '5:Sci', act: () => { menu = { prompt: 'Sci 0~9?  (0 = 10 digits)', digit: d => { disp = { t: 'sci', n: d || 10 }; save(); } }; return true; } },
+      { l: '6:Norm', act: () => { menu = { prompt: 'Norm 1~2?', digit: d => { if (d !== 1 && d !== 2) return false; disp = { t: 'norm', n: d }; save(); } }; } },
+    ]);
+  }
+  // CLR asks before wiping anything, like the real calculator
+  const confirmThen = (what, fn) => { menu = { prompt: `${what}?<br>[=] Yes&nbsp;&nbsp;[AC] Cancel`, confirm: fn }; };
+  function modeMenu() {
+    openMenu('MODE', [
+      { l: '1:COMP', act: () => {} },
+      { l: '2:STAT', act: () => { showPage('stat'); } },
+      { l: '3:TABLE', act: () => { showPage('table'); } },
+    ]);
+  }
+  function clrMenu() {
+    openMenu('CLEAR', [
+      { l: '1:Setup', act: () => confirmThen('Clear Setup', () => { angle = 'DEG'; disp = { t: 'norm', n: 2 }; save(); }) },
+      { l: '2:Memory', act: () => confirmThen('Clear Memory', () => { Object.keys(vars).forEach(k => vars[k] = 0); ans = preAns = 0; save(); renderVars(); }) },
+      { l: '3:All', act: () => confirmThen('Reset All', () => { angle = 'DEG'; disp = { t: 'norm', n: 2 }; Object.keys(vars).forEach(k => vars[k] = 0); ans = preAns = 0; history = []; save(); renderVars(); renderHistory(); acAll(); }) },
+    ]);
+  }
+  function drgMenu() {
+    openMenu('DRG▶ convert from', [
+      { l: '1:°', act: () => insTok('°', 'δ', 'post') },
+      { l: '2:ʳ', act: () => insTok('ʳ', 'ρ', 'post') },
+      { l: '3:ᵍ', act: () => insTok('ᵍ', 'γ', 'post') },
+    ]);
+  }
+  function menuPick(d) {
+    if (!menu) return;
+    if (menu.confirm) return;
+    if (menu.digit) { const m = menu; menu = null; if (m.digit(d) === false) menu = m; return; }
+    const it = menu.items[d - 1];
+    if (!it) return;
+    menu = null;
+    it.act();
+  }
+  // =============== pages ===============
+  // The bottom buttons switch views. History, Table and Settings (and Stats, opened by the STAT keys)
+  // swap the keypad for a page; Guide keeps the keypad and turns it into "learn mode";
+  // Calculator, Esc, "◀ Calculator" or pressing the lit button again come back.
+  let page = 'calc';
+  const PAGES = { hist: 'histCard', stat: 'statCard', table: 'tableCard', set: 'setCard' };
+  const BTNS = { guide: 'goGuide', hist: 'goHist', calc: 'goCalc', table: 'goTable', set: 'goSet' };
+  function showPage(p) {
+    if (p === page) p = 'calc';
+    const g = id => document.getElementById(id), face = g('face'), pages = g('pages');
+    page = p;
+    const onFace = p === 'calc' || p === 'guide';
+    face.hidden = !onFace; pages.hidden = onFace;
+    setLearning(p === 'guide');
+    for (const [k, card] of Object.entries(PAGES)) g(card).hidden = k !== p;
+    if (PAGES[p]) { sizePages(); g(PAGES[p]).scrollTop = 0; }
+    for (const [k, id] of Object.entries(BTNS)) { g(id).classList.toggle('on', k === p); g(id).setAttribute('aria-pressed', k === p); }
+    if (p === 'table') renderTable();
+    if (p === 'set') renderSettings();
+    g('tHow').hidden = p !== 'table';   // the "?" help button belongs to the Table page only
+    if (p !== 'table') hideHelp();
+    const calc = face.parentNode;
+    if (calc.getBoundingClientRect().top < 0) calc.scrollIntoView({ block: 'start' });
+    if (PAGES[p]) { const c = g(PAGES[p]); c.tabIndex = -1; c.focus({ preventScroll: true }); }
+  }
+  // Pages are exactly as tall as the keypad, so the calculator never changes size and the bottom
+  // buttons stay where the finger is; a page's content scrolls inside. The keypad is measured with
+  // the page briefly swapped out (no paint happens in between, so nothing flickers).
+  function sizePages() {
+    const face = document.getElementById('face'), pages = document.getElementById('pages');
+    const fh = face.hidden, ph = pages.hidden;
+    face.hidden = false; pages.hidden = true;
+    const h = face.offsetHeight;
+    face.hidden = fh; pages.hidden = ph;
+    const overlap = -parseFloat(getComputedStyle(pages).marginTop) || 0;   // the grey sheet reaches up over the body's top padding
+    pages.style.height = (h + overlap) + 'px';
+  }
+
+  // =============== guide (learn mode) ===============
+  // Every example below was checked on this calculator.
+  const plainText = h => { const t = document.createElement('span'); t.innerHTML = h; return t.textContent; };
+  const keyName = k => k.digit != null ? 'digit' : k.title || plainText(k.l);
+  const GUIDE = {
+    'SHIFT': { t: 'SHIFT', d: 'Unlocks the yellow label above a key. Press SHIFT, then that key. It works for one key press.', ex: 'SHIFT then sin gives sin⁻¹' },
+    'ALPHA': { t: 'ALPHA', d: 'Unlocks the pink label above a key: memory letters and a few extra functions. Press ALPHA, then that key.', ex: 'ALPHA then ) types X' },
+    'MODE': { t: 'MODE', d: 'Opens a menu: 1 COMP for normal calculations, 2 STAT for the statistics page, 3 TABLE for the function table. Tap an item or press its number.' },
+    'ON': { t: 'ON', d: 'Clears the screen like AC. After SHIFT AC (OFF) has turned the screen off, ON turns it back on.' },
+    'Abs': { t: 'Absolute value', d: 'The size of a number without its minus sign. Type the number in the box.', ex: '|−7| = 7' },
+    'x³': { t: 'Cube', d: 'Raises the number before it to the power 3.', ex: '2³ = 8' },
+    'x−1': { t: 'Reciprocal', d: 'One divided by the number before it.', ex: '4⁻¹ = 1/4' },
+    'log with any base': { t: 'Log with any base', d: 'Type the base in the small box, press ▶, then type the number.', ex: 'log₂(8) = 3' },
+    'fraction': { t: 'Fraction', d: 'Type the top, press ▼, type the bottom, then press ▶ to carry on.', ex: '3/4 + 1/4 = 1' },
+    'square root': { t: 'Square root', d: 'Type the number inside the root.', ex: '√16 = 4' },
+    'x²': { t: 'Square', d: 'Raises the number before it to the power 2.', ex: '5² = 25' },
+    'power': { t: 'Power', d: 'Raises the number before it to any power. Type the power in the small box, then press ▶.', ex: '2⁵ = 32' },
+    'log': { t: 'Log (base 10)', d: 'How many times 10 is multiplied to get the number.', ex: 'log(100) = 2' },
+    'ln': { t: 'Natural log', d: 'Log with base e (about 2.718).', ex: 'ln(e) = 1' },
+    'negative': { t: 'Negative sign', d: 'Types a minus sign that belongs to a number, like −5. To subtract, use the − key instead.', ex: '(−)3×2 = −6' },
+    'degrees minutes seconds': { t: 'Degrees, minutes, seconds', d: 'Press it after each part of an angle or time. Pressed on an answer, it switches between decimal and ° ′ ″.', ex: '1.5 = then °′″ shows 1°30′0″' },
+    'hyperbolic': { t: 'Hyperbolic', d: 'Press hyp, then sin, cos or tan for sinh, cosh or tanh. For the inverse: hyp, then SHIFT, then sin.', ex: 'sinh(1) = 1.175201194' },
+    'sin': { t: 'Sine', d: 'Sine of an angle. Degrees or radians is set in Settings.', ex: 'sin(30) = 1/2' },
+    'cos': { t: 'Cosine', d: 'Cosine of an angle. Degrees or radians is set in Settings.', ex: 'cos(60) = 1/2' },
+    'tan': { t: 'Tangent', d: 'Tangent of an angle. Degrees or radians is set in Settings.', ex: 'tan(45) = 1' },
+    'RCL': { t: 'Recall', d: 'RCL, then a letter key (A–F, X, Y or M), shows the number saved in that letter.' },
+    'ENG': { t: 'Engineering form', d: 'Shows the answer with a power of ten in steps of 3 (thousands, millions). Press again to step.', ex: '12345 = then ENG shows 12.345×10³' },
+    '(': { t: 'Open bracket', d: 'Brackets group part of a calculation so it is worked out first.', ex: '(2+3)×4 = 20' },
+    ')': { t: 'Close bracket', d: 'Closes a bracket. Closing brackets at the very end can be left out.', ex: '(2+3)×4 = 20' },
+    'fraction or decimal': { t: 'Fraction ⇄ decimal', d: 'Switches the answer on screen between a fraction and a decimal.', ex: '3÷4 = 3/4, then S⇔D shows 0.75' },
+    'M+': { t: 'Add to memory M', d: 'Adds the answer to memory M, for running totals. If a calculation is waiting, it is worked out first.' },
+    'digit': { t: 'Number keys', d: 'Type numbers. Use . for decimals.', ex: '12.5' },
+    'DEL': { t: 'Delete', d: 'Removes the thing just before the cursor. On an answer, DEL lets you edit the calculation again.' },
+    'AC': { t: 'All clear', d: 'Wipes the calculation on screen. Saved memory and your History stay.' },
+    '×': { t: 'Multiply', d: 'Multiplies. × and ÷ are worked out before + and −.', ex: '2+3×4 = 14' },
+    '÷': { t: 'Divide', d: 'Divides. Whole numbers give a fraction; press S⇔D for the decimal.', ex: '7÷2 = 7/2' },
+    '+': { t: 'Add', d: 'Adds two numbers.', ex: '2+3 = 5' },
+    '−': { t: 'Subtract', d: 'Subtracts. For a negative number, use the (−) key.', ex: '9−4 = 5' },
+    '.': { t: 'Decimal point', d: 'Types a decimal point.', ex: '0.5' },
+    'times ten to the power': { t: '×10 to the power', d: 'For very big or very small numbers. Type the power after it.', ex: '3 ×10ˣ 8 = 300,000,000' },
+    'Ans': { t: 'Last answer', d: 'Puts your last answer into a new calculation, so you can keep going.', ex: 'Ans × 2' },
+    '=': { t: 'Equals', d: 'Works out the answer. The calculation is also saved to History.', ex: '2+3×4 = 14' },
+  };
+  const SHIFT_G = {
+    '÷R': 'Divides and shows the remainder: 17 ÷R 5 = 3, R=2.',
+    'x!': 'Factorial: 5! = 120.',
+    'SETUP': 'Opens the setup menu: degrees, radians or grads, and how answers are shown. Same as the Settings button.',
+    'mixed fraction': 'A mixed fraction like 1½: fill the whole number, then the top, then the bottom.',
+    '∛■': 'Cube root: ∛27 = 3.',
+    'nth root': 'Any root: type which root first, then the number. ⁴√16 = 2.',
+    '10 to the power': '10 to a power: 10³ = 1,000.',
+    'e to the power': 'e to a power: e¹ = 2.718281828.',
+    'FACT': 'Splits a whole-number answer into prime factors: 12 = then SHIFT °′″ shows 2²×3.',
+    'sin−1': 'The angle that has this sine: sin⁻¹(0.5) = 30.',
+    'cos−1': 'The angle that has this cosine.',
+    'tan−1': 'The angle that has this tangent.',
+    'STO': 'Store: SHIFT RCL, then a letter key, saves your last answer in that letter.',
+    'engineering left': 'Engineering form, stepping the other way: 12345 = then SHIFT ENG shows 0.012345×10⁶.',
+    '%': 'Percent: 50×20% = 10.',
+    ',': 'A comma, to separate the two numbers in GCD( , ), Pol( , ) and similar.',
+    'mixed or improper': 'Switches between a mixed fraction and an improper one: 7÷2 = 7/2 becomes 3½.',
+    'M−': 'Subtracts the answer from memory M.',
+    'CLR': 'Clear menu: reset Setup, Memory or All. It asks you to confirm with =.',
+    'INS': 'Insert: then a function key wraps the number right of the cursor, so 1+76 becomes 1+√76.',
+    'OFF': 'Turns the screen off. Press ON to turn it back on.',
+    'nPr': 'Arrangements of r items out of n, in order: 5P2 = 20.',
+    'nCr': 'Choices of r items out of n, order not mattering: 5C2 = 10.',
+    'STAT': 'Opens the statistics page: averages, spread and a straight-line fit.',
+    'Pol': 'From x, y to distance and angle: Pol(3,4) gives r=5, θ=53.13010235.',
+    'Rec': 'From distance and angle to x, y: Rec(2,60) gives x=1, y=1.732050808.',
+    'Rnd': 'Rounds a value to the digits shown on screen (follows the Fix or Sci setting).',
+    'Ran#': 'A random number between 0 and 1.',
+    'π': 'Pi: 3.141592654.',
+    'DRG▶': 'Converts an angle from another unit: type the angle, then pick °, ʳ (radians) or ᵍ (grads).',
+  };
+  const ALPHA_G = {
+    'GCD': 'Greatest common divisor: GCD(12,18) = 6.',
+    'LCM': 'Least common multiple: LCM(4,6) = 12.',
+    'Int': 'The whole-number part: Int(−2.7) = −2.',
+    'Intg': 'The largest whole number not above it: Intg(−2.7) = −3.',
+    'RanInt': 'A random whole number between two numbers, like a dice roll with RanInt#(1,6).',
+    'e': 'The number e: 2.718281828.',
+    'PreAns': 'The answer before the last one.',
+  };
+  const letterInfo = L => `Types the memory letter ${L} into a calculation, using the number saved in it.`;
+  const LEARN_INTRO = `<div class="lt">Tap any key to learn it</div>
+    <p>While the Guide is on, keys explain themselves here instead of typing.</p>
+    <b>Getting started</b>
+    <ol><li>Type a calculation, for example 2 + 3 × 4.</li><li>Press <b>=</b> for the answer: 14.</li><li><b>DEL</b> removes the last thing typed, <b>AC</b> clears it all.</li><li>Yellow labels: press <b>SHIFT</b> first. Pink labels: <b>ALPHA</b> first.</li></ol>
+    <p class="tip">Tap Calculator below to start calculating.</p>`;
+  function setLearning(on) {
+    const g = id => document.getElementById(id);
+    g('lcd').hidden = on; g('learn').hidden = !on;
+    g('brandSub').textContent = on ? 'Guide · tap any key' : 'SC-10 · Natural display';
+    document.querySelectorAll('.picked').forEach(b => b.classList.remove('picked'));
+    if (on) { g('learn').innerHTML = LEARN_INTRO; g('learn').scrollTop = 0; shift = alpha = false; render(); }
+  }
+  function showLearn(btn, html) {
+    document.querySelectorAll('.picked').forEach(b => b.classList.remove('picked'));
+    btn.classList.add('picked');
+    const el = document.getElementById('learn'); el.innerHTML = html; el.scrollTop = 0;
+  }
+  function explainKey(k) {
+    const info = GUIDE[keyName(k)] || { t: plainText(k.l), d: '' };
+    let h = `<div class="lt"><span class="k ${k.c || ''}">${k.l}</span>${info.t}</div><p>${info.d}</p>`;
+    if (info.ex) h += `<span class="ex">${info.ex}</span>`;
+    if (k.s) h += `<div class="alt"><span class="tag2 s">SHIFT</span><span><b>${k.s}</b> · ${SHIFT_G[k.sl || plainText(k.s)] || ''}</span></div>`;
+    if (k.al) h += `<div class="alt"><span class="tag2 a">ALPHA</span><span><b>${k.al}</b> · ${k.letter ? letterInfo(k.letter) : ALPHA_G[k.al] || ''}</span></div>`;
+    showLearn(k.btn, h);
+  }
+  function explainArrows(btn) {
+    showLearn(btn, `<div class="lt"><span class="k">◀ ▶</span>Arrow keys</div>
+      <p><b>◀ ▶</b> move the cursor left and right, and in and out of boxes.</p>
+      <p><b>▲ ▼</b> move between the top and bottom of a fraction. On an answer, ▲ steps back through earlier calculations and ▼ forward again.</p>`);
+  }
+  // "When to use this" tips for new users; they change with the choice that is picked
+  const ANGLE_WHEN = {
+    DEG: 'Use for school maths: triangles, geometry, and angles you measure with a protractor.',
+    RAD: 'Use in calculus and advanced maths, or when angles are written with π, like π/2.',
+    GRA: 'Rarely needed. Used in some surveying and engineering work.',
+  };
+  const FMT_WHEN = {
+    norm1: () => 'Like Norm 2, but numbers smaller than 0.01 switch to ×10 form, so 0.005 shows as 5×10⁻³.',
+    norm2: () => 'Best for almost everything. Shows up to 10 digits, and only very tiny numbers switch to ×10 form.',
+    fix: () => `Always shows ${disp.n} decimal place${disp.n === 1 ? '' : 's'}. Use for money (2 places) or when homework says “round to ${disp.n === 1 ? '1 decimal place' : `${disp.n} decimal places`}”.`,
+    sci: () => `Always shows ×10 form with ${disp.n} significant digit${disp.n === 1 ? '' : 's'}. Use in physics and chemistry for very big or very small numbers, like 6.02×10²³.`,
+  };
+  const CIRCLE = { DEG: '360°', RAD: '2π (about 6.28)', GRA: '400 grads' };
+  const live = rows => rows.map(([k, v]) => `<div><span class="lk">${k}</span><span class="lv">${v}</span></div>`).join('');
+  function renderSettings() {
+    const g = id => document.getElementById(id);
+    const f = disp.t === 'norm' ? 'norm' + disp.n : disp.t;
+    g('setAngle').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === angle));
+    g('setFmt').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === f));
+    g('setDigWrap').hidden = disp.t === 'norm';
+    if (disp.t !== 'norm') {
+      const nums = disp.t === 'fix' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      g('setDig').innerHTML = nums.map(n => `<option value="${n}">${n}</option>`).join('');
+      g('setDig').value = disp.n;
+    }
+    g('setAngleWhen').textContent = ANGLE_WHEN[angle];
+    g('setFmtWhen').textContent = FMT_WHEN[f]();
+    g('setDigL').textContent = disp.t === 'fix' ? 'Decimal places' : 'Significant digits';
+    // live examples, worked out by the calculator itself with the settings that are picked now
+    const sin90 = withX(() => { try { return evaluateStr('sin(90)'); } catch (er) { return NaN; } });
+    g('setAngleEx').innerHTML = live([['sin(90) =', fmt(sin90, true)], ['A full circle is', CIRCLE[angle]]]);
+    g('setFmtEx').innerHTML = live([['π shows as', fmt(Math.PI, true)], ['1234567 shows as', fmt(1234567, true)], ['0.00012 shows as', fmt(0.00012, true)]]);
+  }
+
+  // =============== keys ===============
+  const T = (d, v, kind) => () => insTok(d, v, kind);
+  const V = L => () => insTok(L, VARN[L], 'start');
+  function trigIns(f, inv) {
+    let name = f, d = f;
+    if (hyp) { name += 'h'; d += 'h'; hyp = false; }
+    if (inv) { name = 'a' + name; d += '⁻¹'; }
+    insTok(d + '(', name + '(', 'start');
+  }
+  const box = '<span class="bx"></span>', boxF = '<span class="bx f"></span>';
+
+  // function area (6 columns). The arrow pad occupies columns 3–4 of the first two rows.
+  const FN = [
+    { l: 'SHIFT', c: 'mod shiftkey', id: 'kShift', mod: true, a: () => { shift = !shift; alpha = false; } },
+    { l: 'ALPHA', c: 'mod alphakey', id: 'kAlpha', mod: true, a: () => { alpha = !alpha; shift = false; } },
+    { l: 'MODE', c: 'mod', s: 'SETUP', a: modeMenu, sa: setupMenu },
+    { l: 'ON', c: 'mod', id: 'on', a: () => { off = false; acAll(); } },
+
+    { l: 'Abs', s: '÷R', a: () => insTpl('abs', [[]], 0, 'start', 0), sa: T('÷R', 'R', 'op') },
+    { l: 'x³', a: () => insTpl('pow', [[tok('3', '3')]], 'after', 'post') },
+    { l: 'x<sup>−1</sup>', s: 'x!', a: T('⁻¹', 'I', 'post'), sa: T('!', '!', 'post') },
+    { l: `log<sub>${boxF}</sub>${box}`, a: () => insTpl('logb', [[], []], 0, 'start', 1), title: 'log with any base' },
+
+    { l: `<span class="kf">${boxF}<i></i>${box}</span>`, s: `${'■'}<sub>□</sub>⁄□`, sl: 'mixed fraction', a: () => insFrac('frac'), sa: () => insFrac('mixed'), title: 'fraction' },
+    { l: `√${box}`, s: '∛■', a: () => insTpl('sqrt', [[]], 0, 'start', 0), sa: () => insTpl('root', [[tok('3', '3')], []], 1, 'start', 1), title: 'square root' },
+    { l: 'x²', a: () => insTpl('pow', [[tok('2', '2')]], 'after', 'post') },
+    { l: `x<sup>${boxF}</sup>`, s: '■√□', sl: 'nth root', a: () => insTpl('pow', [[]], 0, 'post'), sa: () => insTpl('root', [[], []], 0, 'start', 1), title: 'power' },
+    { l: 'log', s: '10<sup>■</sup>', sl: '10 to the power', a: T('log(', 'log('), sa: () => { insTok('10', '(10)'); insTpl('pow', [[]], 0, 'start', 0); } },
+    { l: 'ln', s: 'e<sup>■</sup>', sl: 'e to the power', a: T('ln(', 'ln('), sa: () => { insTok('e', 'e'); insTpl('pow', [[]], 0, 'start', 0); } },
+
+    { l: '(−)', al: 'A', letter: 'A', a: T('−', '~'), aa: V('A'), title: 'negative' },
+    { l: '°′″', s: 'FACT', al: 'B', letter: 'B', a: dmsKey, sa: factKey, aa: V('B'), title: 'degrees minutes seconds' },
+    { l: 'hyp', al: 'C', letter: 'C', id: 'kHyp', a: () => { hyp = !hyp; }, aa: V('C'), title: 'hyperbolic' },
+    { l: 'sin', s: 'sin<sup>−1</sup>', al: 'D', letter: 'D', trig: true, a: () => trigIns('sin', false), sa: () => trigIns('sin', true), aa: V('D') },
+    { l: 'cos', s: 'cos<sup>−1</sup>', al: 'E', letter: 'E', trig: true, a: () => trigIns('cos', false), sa: () => trigIns('cos', true), aa: V('E') },
+    { l: 'tan', s: 'tan<sup>−1</sup>', al: 'F', letter: 'F', trig: true, a: () => trigIns('tan', false), sa: () => trigIns('tan', true), aa: V('F') },
+
+    { l: 'RCL', s: 'STO', a: () => { rcl = true; }, sa: () => { sto = true; } },
+    { l: 'ENG', s: '←', sl: 'engineering left', a: () => engKey(-1), sa: () => engKey(1) },
+    { l: '(', s: '%', a: T('(', '('), sa: T('%', '%', 'post'), key: '(' },
+    { l: ')', s: ',', al: 'X', letter: 'X', a: T(')', ')', 'post'), sa: T(',', ','), aa: V('X'), key: ')' },
+    { l: 'S⇔D', s: 'a<sup>b</sup>⁄<sub>c</sub>⇔<sup>d</sup>⁄<sub>c</sub>', sl: 'mixed or improper', al: 'Y', letter: 'Y', a: sdKey, sa: mixedKey, aa: V('Y'), title: 'fraction or decimal' },
+    { l: 'M+', s: 'M−', al: 'M', letter: 'M', a: () => memAdd(1), sa: () => memAdd(-1), aa: V('M') },
+  ];
+  const D = (n, s, sa, al, aa) => ({ l: n, c: 'big', digit: +n, a: T(n, n, 'num'), key: n, s, sa, al, aa });
+  const MAIN = [
+    D('7'), D('8'), D('9', 'CLR', clrMenu),
+    { l: 'DEL', c: 'big clr', s: 'INS', a: del, sa: () => { insArg = !insArg; }, key: 'Backspace' },
+    { l: 'AC', c: 'big clr', s: 'OFF', id: 'ac', a: acAll, sa: () => { acAll(); off = true; }, key: 'Escape' },
+    D('4'), D('5'), D('6'),
+    { l: '×', c: 'big op', s: 'nPr', al: 'GCD', a: T('×', '*', 'op'), sa: T('P', 'P', 'op'), aa: T('GCD(', 'gcd('), key: '*' },
+    { l: '÷', c: 'big op', s: 'nCr', al: 'LCM', a: T('÷', '/', 'op'), sa: T('C', 'C', 'op'), aa: T('LCM(', 'lcm('), key: '/' },
+    D('1', 'STAT', () => showPage('stat')), D('2'), D('3'),
+    { l: '+', c: 'big op', s: 'Pol', al: 'Int', a: T('+', '+', 'op'), sa: T('Pol(', 'pol('), aa: T('Int(', 'int('), key: '+' },
+    { l: '−', c: 'big op', s: 'Rec', al: 'Intg', a: T('−', '-', 'op'), sa: T('Rec(', 'rec('), aa: T('Intg(', 'intg('), key: '-' },
+    D('0', 'Rnd', T('Rnd(', 'rnd(')),
+    { l: '.', c: 'big', s: 'Ran#', al: 'RanInt', a: T('.', '.', 'num'), sa: T('Ran#', 'ran'), aa: T('RanInt#(', 'ranint('), key: '.' },
+    { l: '×10<sup>x</sup>', c: 'big txt', s: 'π', al: 'e', a: T('ᴇ', 'E', 'op'), sa: T('π', 'pi'), aa: T('e', 'e'), title: 'times ten to the power' },
+    { l: 'Ans', c: 'big txt', s: 'DRG▶', al: 'PreAns', a: T('Ans', 'ans'), sa: drgMenu, aa: T('PreAns', 'pans') },
+    { l: '=', c: 'big eq op', id: 'eq', a: doEval, key: 'Enter' },
+  ];
+
+  const keyMap = {};
+  function build(container, list) {
+    list.forEach(k => {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const lab = document.createElement('div'); lab.className = 'lab' + (k.s && k.al ? '' : ' center');
+      lab.innerHTML = (k.s ? `<span class="s">${k.s}</span>` : '') + (k.al ? `<span class="a">${k.al}</span>` : '');
+      const b = document.createElement('button'); b.type = 'button';
+      b.className = 'k ' + (k.c || ''); b.innerHTML = k.l;
+      if (k.id) b.id = k.id;
+      const plain = h => { const t = document.createElement('span'); t.innerHTML = h; return t.textContent; };
+      let aria = k.title || plain(k.l);
+      if (k.s) aria += `; shift: ${k.sl || plain(k.s)}`;
+      if (k.al) aria += `; alpha: ${k.al}`;
+      b.setAttribute('aria-label', aria);
+      b.addEventListener('click', () => press(k));
+      cell.append(lab, b); container.append(cell);
+      k.btn = b;
+      if (k.key) keyMap[k.key] = k;
+    });
+  }
+  function buildDpad(container) {
+    const d = document.createElement('div'); d.className = 'dpad';
+    const mk = (cls, txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', () => page === 'guide' ? explainArrows(b) : pressNav(fn)); d.append(b); };
+    mk('up', '▲', 'Up', vertUp);
+    mk('lf', '◀', 'Left', left);
+    mk('rg', '▶', 'Right', right);
+    mk('dn', '▼', 'Down', vertDown);
+    const mid = document.createElement('span'); mid.className = 'mid'; d.append(mid);
+    container.append(d);
+  }
+  function pressNav(fn) {
+    if (off) return;
+    if (menu) { menu = null; render(); return; }
+    shift = alpha = sto = rcl = hyp = insArg = false;
+    if (fn !== vertUp && fn !== vertDown) demo = false;   // moving the cursor means editing the example, so keep it
+    fn(); render();
+  }
+  function press(k) {
+    if (page === 'guide') { explainKey(k); return; }   // learn mode: a key explains itself instead of typing
+    if (off) { if (k.id === 'on') { off = false; acAll(); } render(); return; }
+    if (menu) {
+      if (menu.confirm) { if (k.id === 'eq') { const f = menu.confirm; menu = null; f(); } else if (k.id === 'ac' || k.id === 'on') menu = null; }
+      else if (k.digit != null) menuPick(k.digit);
+      else if (k.id === 'ac' || k.id === 'on') menu = null;
+      render(); return;
+    }
+    if (sto || rcl) {
+      const which = sto ? 'sto' : 'rcl'; sto = rcl = false; shift = alpha = false;
+      if (k.letter) {
+        if (which === 'sto') doSto(k.letter);
+        else { setRoot([tok(k.letter, VARN[k.letter])]); evaluated = false; err = null; doEval(); }   // RCL shows the stored value
+      }
+      render(); return;
+    }
+    if (k.mod) { k.a(); render(); return; }
+    const m = shift ? 's' : alpha ? 'a' : null;
+    const hadHyp = hyp, hadIns = insArg;
+    shift = alpha = false;
+    const fn = m === 's' ? k.sa : m === 'a' ? k.aa : null;
+    (fn || k.a)();
+    if (hadHyp && (!k.trig || m === 'a') && k.id !== 'kHyp') hyp = false;   // hyp only applies to the next sin/cos/tan
+    if (hadIns) insArg = false;                               // INS only applies to the next key
+    render();
+  }
+
+  // =============== render ===============
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const CUR = '<span class="cur"></span>';
+  // reg (LCD only): collects every sequence drawn, and each piece is tagged data-s (which sequence) and
+  // data-i (its place in it), so a tap on the screen can be turned back into a cursor position
+  let slotRefs = [];
+  function seqHTML(seq, showCur, reg) {
+    const here = showCur && cur.seq === seq;
+    const at = reg ? (s => i => ` data-s="${s}" data-i="${i}"`)(reg.push(seq) - 1) : () => '';
+    if (!seq.length) return `<span class="box${here ? ' act' : ''}"${at(0)} data-empty>${here ? CUR : ''}</span>`;
+    let h = '';
+    seq.forEach((it, i) => { if (here && cur.pos === i) h += CUR; h += itemHTML(it, showCur, reg, at(i)); });
+    if (here && cur.pos === seq.length) h += CUR;
+    return h;
+  }
+  function itemHTML(it, sc, reg, at = '') {
+    const S = i => seqHTML(it.s[i], sc, reg);
+    const wrap = h => at ? `<span${at}>${h}</span>` : h;
+    switch (it.k) {
+      case 't': return /^[°′″ʳᵍ⁻¹]/.test(it.d) ? `<span class="mk"${at}>${esc(it.d)}</span>` : wrap(esc(it.d));
+      case 'frac': return wrap(`<span class="frac"><span class="n">${S(0)}</span><span class="d">${S(1)}</span></span>`);
+      case 'mixed': return wrap(`${S(0)}<span class="frac"><span class="n">${S(1)}</span><span class="d">${S(2)}</span></span>`);
+      case 'pow': return wrap(`<span class="pw">${S(0)}</span>`);
+      case 'sqrt': return wrap(`<span class="rt"><span class="rs">√</span><span class="rb">${S(0)}</span></span>`);
+      case 'root': return wrap(`<span class="ri">${S(0)}</span><span class="rt"><span class="rs">√</span><span class="rb">${S(1)}</span></span>`);
+      case 'logb': return wrap(`log<span class="sb">${S(0)}</span>(${S(1)})`);
+      case 'abs': return wrap(`|${S(0)}|`);
+    }
+    return '';
+  }
+  // Tap (or click) on the expression: put the cursor in the gap nearest the finger.
+  // Each piece offers the gap on its left and right; an empty box offers itself. Being above or below a
+  // piece counts extra, so a tap on the bottom of a fraction lands in the denominator.
+  function placeCursorAt(x, y) {
+    let best = null;
+    $('expr').querySelectorAll('[data-s]').forEach(el => {
+      const r = el.getBoundingClientRect(), s = +el.dataset.s, i = +el.dataset.i;
+      const dy = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+      const gaps = el.hasAttribute('data-empty') ? [[i, (r.left + r.right) / 2]] : [[i, r.left], [i + 1, r.right]];
+      gaps.forEach(([pos, gx]) => { const score = Math.abs(x - gx) + 3 * dy; if (!best || score < best.score) best = { score, seq: slotRefs[s], pos }; });
+    });
+    if (!best) return false;   // nothing to edit (empty input, or an M+ / STO note is showing)
+    if (best.seq === cur.seq && best.pos === cur.pos && !evaluated && !err) return true;
+    if (evaluated || err) { evaluated = false; err = null; view = { t: 'norm' }; extra = null; note = null; }
+    shift = alpha = sto = rcl = hyp = insArg = false; histIdx = -1; draft = null; demo = false;
+    cur = { seq: best.seq, pos: best.pos };
+    render();
+    return true;
+  }
+  let skipClick = false;   // set after a hold-and-slide or a swipe, so letting go is not also a tap
+  function tapExpr(e) {
+    if (skipClick) { skipClick = false; return; }
+    if (off || menu || e.target.closest('button')) return;   // menu items on the screen handle their own taps
+    placeCursorAt(e.clientX, e.clientY);
+  }
+
+  // Touch: hold on the screen, then slide to move the cursor, with a magnifier above the finger (like phone text fields).
+  // A quick sideways swipe still scrolls a long expression; an up/down swipe still scrolls the page.
+  const HOLD_MS = 400, SLOP = 8;
+  let touch = null;   // { id, x0, y0, scroll0, timer, holding, swiping }
+  function showLoupe(x, y) {
+    const lp = $('loupe'), line = $('expr').querySelector('.line');
+    if (!line) return;
+    const W = 168, H = 64, S = 1.7, lr = line.getBoundingClientRect();
+    const inner = lp.firstElementChild;
+    inner.innerHTML = line.outerHTML;
+    inner.style.transform = `translate(${W / 2 - (x - lr.left) * S}px, ${H / 2 - (y - lr.top) * S}px) scale(${S})`;
+    lp.style.left = Math.max(4, Math.min(innerWidth - W - 4, x - W / 2)) + 'px';
+    lp.style.top = Math.max(4, y - H - 46) + 'px';
+    lp.hidden = false;
+  }
+  function endTouch() {
+    if (!touch) return;
+    clearTimeout(touch.timer);
+    if (touch.holding || touch.swiping) skipClick = true;
+    $('loupe').hidden = true;
+    touch = null;
+  }
+  function touchDown(e) {
+    if (e.pointerType === 'mouse' || off || menu || e.target.closest('button')) return;
+    endTouch(); skipClick = false;
+    const ex = $('expr');
+    touch = { id: e.pointerId, x0: e.clientX, y0: e.clientY, scroll0: ex.scrollLeft, holding: false, swiping: false };
+    touch.timer = setTimeout(() => {
+      if (!touch || touch.swiping) return;
+      if (!placeCursorAt(touch.x0, touch.y0)) { touch = null; return; }
+      touch.holding = true;
+      if (navigator.vibrate) { try { navigator.vibrate(8); } catch (er) {} }
+      showLoupe(touch.x0, touch.y0);
+    }, HOLD_MS);
+  }
+  function touchMove(e) {
+    if (!touch || e.pointerId !== touch.id) return;
+    if (touch.holding) { placeCursorAt(e.clientX, e.clientY); showLoupe(e.clientX, e.clientY); return; }
+    const dx = e.clientX - touch.x0, dy = e.clientY - touch.y0;
+    if (!touch.swiping && Math.hypot(dx, dy) > SLOP) {
+      if (Math.abs(dy) > Math.abs(dx)) { clearTimeout(touch.timer); touch = null; return; }   // up/down: the page scrolls as usual
+      touch.swiping = true; clearTimeout(touch.timer);
+    }
+    if (touch.swiping) $('expr').scrollLeft = touch.scroll0 - dx;   // sideways swipe scrolls the expression
+  }
+  function resultHTML() {
+    if (err) return { cls: 'err', h: `${err} ERROR<span class="hintline">[AC] cancel · [◀][▶] go to error</span>` };
+    const v = lastShown;
+    let h;
+    switch (view.t) {
+      case 'frac': h = fracHTML(v, view.mixed); break;
+      case 'dms': h = dmsHTML(v); break;
+      case 'fact': h = factHTML(v); break;
+      case 'eng': { const m = v / Math.pow(10, view.e); h = expHTML(minus(parseFloat(m.toPrecision(10)).toString()), view.e, true); break; }
+      default: h = fmt(v, true);
+    }
+    if (extra && extra.t === 'pair') h = `<span class="small">${extra.a[0]}=${fmt(extra.a[1], true)}, ${extra.b[0]}=${fmt(extra.b[1], true)}</span>`;
+    if (extra && extra.t === 'rem') h = `${h}<span class="small">, R=${fmt(extra.r, true)}</span>`;
+    return { cls: '', h };
+  }
+  function render() {
+    const lcd = $('lcd');
+    lcd.classList.toggle('off', off);
+    lcd.classList.toggle('menuing', !!menu);
+    const ind = [
+      ['S', shift], ['A', alpha], ['M', vars.M !== 0], ['STO', sto], ['RCL', rcl], ['hyp', hyp], ['INS', insArg],
+    ];
+    $('ind').innerHTML = ind.map(([t, on]) => `<span class="${on ? 'on' : ''}">${t}</span>`).join('') +
+      `<span class="sp"></span><span class="on">${angle === 'DEG' ? 'D' : angle === 'RAD' ? 'R' : 'G'}</span>` +
+      (disp.t !== 'norm' ? `<span class="on">${disp.t === 'fix' ? 'FIX' : 'SCI'}</span>` : '') + `<span class="on">Math</span>`;
+    const ex = $('expr'), rs = $('res');
+    if (menu) {
+      if (menu.prompt) { ex.innerHTML = `<div class="prompt">${menu.prompt}</div>`; }
+      else {
+        ex.innerHTML = `<div class="menu"><span class="title">${menu.title}</span>${menu.items.map((it, i) => `<button type="button" data-i="${i + 1}">${it.l}</button>`).join('')}</div>`;
+        ex.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => { menuPick(+b.dataset.i); render(); }));
+      }
+      rs.className = 'res'; rs.innerHTML = '';
+    } else {
+      const editing = !evaluated;
+      slotRefs = [];
+      ex.innerHTML = `<span class="line">${note && evaluated ? `<span class="note">${esc(note)}</span>` : (root.length || editing ? seqHTML(root, editing, slotRefs) : '')}</span>`;
+      if (!root.length && editing) ex.querySelector('.line').innerHTML = CUR;
+      const c = ex.querySelector('.cur');
+      if (c) {
+        const l = c.getBoundingClientRect().left - ex.getBoundingClientRect().left + ex.scrollLeft;
+        if (l < ex.scrollLeft + 10) ex.scrollLeft = Math.max(0, l - 20);
+        else if (l > ex.scrollLeft + ex.clientWidth - 14) ex.scrollLeft = l - ex.clientWidth + 30;
+      } else ex.scrollLeft = 0;
+      if (evaluated) { const r = resultHTML(); rs.className = 'res ' + r.cls; rs.innerHTML = r.h; rs.scrollLeft = rs.scrollWidth; }
+      else { rs.className = 'res'; rs.innerHTML = root.length ? '' : '0'; }
+    }
+    $('kShift').classList.toggle('armed', shift);
+    $('kAlpha').classList.toggle('armed', alpha);
+  }
+  function renderHistory() {
+    const ul = $('hist'); ul.innerHTML = '';
+    $('clrHist').hidden = !history.length;
+    resetClear();
+    if (!history.length) { ul.innerHTML = '<li class="empty">No calculations yet. Press = on the calculator and they will show up here.</li>'; return; }
+    history.forEach(h => {
+      const li = document.createElement('li');
+      const b = document.createElement('button'); b.type = 'button';
+      b.innerHTML = `<span class="he">${seqHTML(h.root, false)}</span><span class="hr"><span class="is">=</span>${histResult(h)}</span>`;
+      b.addEventListener('click', () => { off = false; menu = null; root = clone(h.root); cur = { seq: root, pos: root.length }; evaluated = false; err = null; doEval(); render(); showPage('calc'); });
+      li.append(b); ul.append(li);
+    });
+  }
+  // a history answer looks the way the calculator first showed it: ⅔ stays a fraction, not 0.6666666667
+  function histResult(h) {
+    const v = defaultView(h.r, h.root);
+    if (v.t === 'frac') return fracHTML(h.r, false);
+    if (v.t === 'dms') return dmsHTML(h.r);
+    return fmt(h.r, true);
+  }
+  // Clear asks once: the first tap turns it into "Tap again to clear all", the second clears
+  let clearTimer = null;
+  function resetClear() {
+    clearTimeout(clearTimer); clearTimer = null;
+    const b = $('clrHist'); b.textContent = 'Clear'; b.classList.remove('danger');
+  }
+  // only letters that hold something are shown; nine zeros mean nothing to a reader
+  function renderVars() {
+    const used = Object.keys(vars).filter(k => vars[k] !== 0);
+    $('varsBox').hidden = !used.length;
+    $('vars').innerHTML = used.map(k => `<div><b>${k}</b><span>${fmt(vars[k], true)}</span></div>`).join('');
+  }
+
+  // =============== statistics ===============
+  const EX_X = '10 12 12 14 16 16 18 11 13 15';
+  const EX_Y = '8.5 11.2 10.4 13.9 17.6 16.1 21.3 9.8 12.7 15.0';
+  function parseList(s) {
+    const parts = s.split(/[\s,;]+/).filter(Boolean);
+    return { nums: parts.map(Number).filter(Number.isFinite), bad: parts.filter(p => !Number.isFinite(Number(p))) };
+  }
+  function sendToCalc(v, label) {
+    if (off) return;
+    menu = null;
+    insTok(label, '(' + v.toPrecision(15).replace('e', 'E').replace('+', '') + ')', 'start');
+    render();
+  }
+  function statBtn(label, v, calcLabel) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sv';
+    b.innerHTML = `<span class="lb">${label}${calcLabel ? `<i>${calcLabel}</i>` : ''}</span><span class="val">${Number.isFinite(v) ? esc(fmt(v, false)) : '—'}</span>`;
+    b.title = 'Use in calculator';
+    if (Number.isFinite(v)) b.addEventListener('click', () => { sendToCalc(v, calcLabel || fmt(v, false)); showPage('calc'); });
+    return b;
+  }
+  function group(title, items) {
+    const g = document.createElement('div'); g.className = 'sgroup';
+    g.innerHTML = `<h3>${title}</h3>`;
+    const grid = document.createElement('div'); grid.className = 'sgrid';
+    items.forEach(it => grid.append(statBtn(...it)));
+    g.append(grid); return g;
+  }
+  function describe(a) {
+    const n = a.length, sum = a.reduce((s, x) => s + x, 0), mean = sum / n;
+    const ss = a.reduce((s, x) => s + (x - mean) ** 2, 0);
+    const sorted = [...a].sort((p, q) => p - q);
+    const med = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+    return { n, sum, sumsq: a.reduce((s, x) => s + x * x, 0), mean, ss, s: n > 1 ? Math.sqrt(ss / (n - 1)) : NaN, sig: Math.sqrt(ss / n), min: sorted[0], max: sorted[n - 1], med };
+  }
+  function renderStats() {
+    const out = $('stOut'); out.innerHTML = '';
+    const xs = $('xs').value, ys = $('ys').value;
+    $('exTag').hidden = !(xs.trim() === EX_X && ys.trim() === EX_Y);
+    const X = parseList(xs), Y = parseList(ys);
+    const msg = (t, bad) => { const p = document.createElement('p'); p.className = 'msg' + (bad ? ' bad' : ''); p.textContent = t; out.append(p); };
+    if (X.bad.length) return msg(`Couldn't read these x values: ${X.bad.slice(0, 4).join(', ')}. Use plain numbers like 3.5 or -2.`, true);
+    if (Y.bad.length) return msg(`Couldn't read these y values: ${Y.bad.slice(0, 4).join(', ')}. Use plain numbers like 3.5 or -2.`, true);
+    if (!X.nums.length) return msg('Enter some x values to see the summary statistics.');
+    const dx = describe(X.nums);
+    out.append(group('Your x values', [
+      ['Count', dx.n, 'n'], ['Mean (average)', dx.mean, 'x̄'], ['Median (middle)', dx.med], ['Smallest', dx.min], ['Largest', dx.max],
+      ['Sum', dx.sum, 'Σx'], ['Sum of squares', dx.sumsq, 'Σx²'],
+      ['Standard deviation, sample', dx.s, 'sₓ'], ['Standard deviation, population', dx.sig, 'σₓ'],
+    ]));
+    if (!Y.nums.length) return;
+    if (Y.nums.length !== X.nums.length) return msg(`x has ${X.nums.length} values and y has ${Y.nums.length}. They need the same count for regression.`, true);
+    if (X.nums.length < 3) return msg('Regression needs at least 3 pairs.');
+    const dy = describe(Y.nums), n = dx.n;
+    if (dx.ss === 0) return msg('All x values are the same, so the slope cannot be estimated.', true);
+    const sxy = X.nums.reduce((s, x, i) => s + (x - dx.mean) * (Y.nums[i] - dy.mean), 0);
+    const b = sxy / dx.ss, a = dy.mean - b * dx.mean;
+    const r = dy.ss === 0 ? NaN : sxy / Math.sqrt(dx.ss * dy.ss);
+    const ssr = X.nums.reduce((s, x, i) => s + (Y.nums[i] - (a + b * x)) ** 2, 0);
+    const se = Math.sqrt(ssr / (n - 2)), seb = se / Math.sqrt(dx.ss);
+    const sea = se * Math.sqrt(1 / n + dx.mean ** 2 / dx.ss);
+    const g = group('Straight-line fit (regression)', [
+      ['Intercept (y when x is 0)', a, 'a'], ['Slope (change in y per 1 x)', b, 'b'],
+      ['Correlation, −1 to 1', r, 'r'], ['Fit quality, 0 to 1', r * r, 'R²'],
+      ['Mean of y', dy.mean, 'ȳ'], ['Standard deviation of y, sample', dy.s, 's_y'], ['Covariance', sxy / (n - 1), 'cov'],
+      ['Standard error of intercept', sea, 'se(a)'], ['Standard error of slope', seb, 'se(b)'],
+      ['t-value of slope', seb > 0 ? b / seb : NaN, 't'], ['Typical distance from the line', se, 's'],
+    ]);
+    const eq = document.createElement('div'); eq.className = 'eqn';
+    eq.textContent = `ŷ = ${fmt(a, false)} ${b < 0 ? '−' : '+'} ${fmt(Math.abs(b), false)}·x`;
+    g.insertBefore(eq, g.children[1]);
+    out.append(g);
+    msg(`Standard errors and t assume the points scatter randomly around a straight line (${n - 2} degrees of freedom).`);
+  }
+
+  // =============== table ===============
+  // The formula is typed on the Table page itself (no keypad round trip) and turned into the
+  // calculator's own source format, so the same maths engine works out every row.
+  const T_FUNCS = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'log', 'ln', 'sqrt', 'abs'];
+  const T_CONSTS = ['pi', 'e'];
+  const tErr = msg => { throw { tmsg: msg }; };
+  function formulaToSrc(text, needX = true) {   // g(X) in Compare may be a plain number, like 10
+    const s = text.toLowerCase().replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-')
+      .replace(/²/g, '^2').replace(/³/g, '^3').replace(/π/g, ' pi ').replace(/√/g, ' sqrt ').replace(/,/g, '.');
+    const raw = s.match(/\d+\.?\d*|\.\d+|[a-z]+|\S/g) || [];
+    if (!raw.length) tErr('Type a formula with X, for example 2X+1.');
+    const toks = [];
+    for (const r of raw) {
+      if (/^[a-z]+$/.test(r)) {
+        if (T_FUNCS.includes(r)) toks.push({ k: 'f', v: r });
+        else if (T_CONSTS.includes(r)) toks.push({ k: 'a', v: r });
+        else if (/^x+$/.test(r)) for (let i = 0; i < r.length; i++) toks.push({ k: 'a', v: 'vx' });
+        else tErr(`“${r.length === 1 ? r.toUpperCase() : r}” is not something the table knows. Use X, numbers, + − × ÷ ^, and sin, cos, tan, √, log, ln.`);
+      } else if (/^[\d.]/.test(r)) toks.push({ k: 'a', v: r });
+      else if ('+-*/^()!'.includes(r)) toks.push({ k: 'o', v: r });
+      else tErr(`“${r}” can't be used in a formula.`);
+    }
+    if (needX && !toks.some(t => t.v === 'vx')) tErr('Your formula needs an X in it, for example 2X+1.');
+    let out = '', prev = null;
+    const endsValue = t => t && (t.k === 'a' || t.v === ')' || t.v === '!');
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i];
+      if (endsValue(prev) && (t.k === 'a' || t.k === 'f' || t.v === '(')) out += '*';   // 2X means 2×X
+      if (t.v === '-' && !endsValue(prev)) { out += '~'; prev = { k: 'o', v: '~' }; continue; }   // a leading or "after (" minus is a negative sign
+      if (t.k === 'f') {
+        const nx = toks[i + 1];
+        if (nx && nx.v === '(') { out += t.v + '('; i++; prev = { k: 'o', v: '(' }; continue; }
+        if (nx && nx.k === 'a') { out += `${t.v}(${nx.v})`; i++; prev = { k: 'o', v: ')' }; continue; }   // sin X means sin(X)
+        tErr(`Put brackets after ${t.v}, for example ${t.v}(X).`);
+      }
+      out += t.v; prev = t;
+    }
+    const open = (out.match(/\(/g) || []).length - (out.match(/\)/g) || []).length;
+    if (open < 0) tErr('There is a ) without a matching (.');
+    return out + ')'.repeat(open);   // brackets left open at the end are closed, like on the calculator
+  }
+  // ---- Table page: one formula, three features (Values, Graph, Zeros) ----
+  let feat = 'values';
+  // the symbol keys and examples go into whichever formula box was used last (f, or g in Compare)
+  let tInput = document.getElementById('tF');
+  const FEAT = {
+    values: { desc: 'See the answer for each X, step by step.', range: 'X values', out: 'Results' },
+    graph: { desc: 'See the shape of your formula. Touch the graph to read any point.', range: 'Show X from', out: 'Graph' },
+    zeros: { desc: 'Find the X values where the answer is 0. These are the solutions of f(X) = 0.', range: 'Search X from', out: 'Solutions' },
+    compare: { desc: 'Put two formulas side by side and compare their answers for each X.', range: 'X values', out: 'Results' },
+  };
+  const short = v => fmt(parseFloat(v.toPrecision(4)), false);   // compact numbers for graph labels
+  // f(x) with the calculator's own engine: null where there is no answer (√ of a negative, ÷0);
+  // an incomplete formula (like "2X+") stops everything with a message.
+  const makeF = src => x => {
+    vars.X = x;
+    try { const v = evaluateStr(src); return Number.isFinite(v) ? v : null; }
+    catch (er) { if (er && er.kind === 'Math') return null; return tErr('Something in the formula is incomplete, for example a sign with nothing after it. Check the formula.'); }
+  };
+  // the table must not change the calculator's own X or its last-answer extras
+  function withX(fn) { const saved = vars.X, savedExtra = extra; try { return fn(); } finally { vars.X = saved; extra = savedExtra; } }
+
+  function renderTable() {
+    const out = $('tOut');
+    const say = (t, bad) => { out.innerHTML = `<p class="msg${bad ? ' bad' : ''}">${esc(t)}</p>`; };
+    const s = $('tStart').value, e = $('tEnd').value;
+    try { localStorage.setItem('hesap-table', JSON.stringify({ f: $('tF').value, g: $('tG').value, s, e, st: $('tStep').value, feat })); } catch (er) {}
+    document.querySelectorAll('.tex button').forEach(b => b.classList.toggle('on', b.textContent === tInput.value));   // light up the example in use
+    document.querySelectorAll('.feat [data-feat]').forEach(b => b.setAttribute('aria-selected', b.dataset.feat === feat));
+    $('tDesc').textContent = FEAT[feat].desc; $('tRangeH').textContent = FEAT[feat].range; $('tOutH').textContent = FEAT[feat].out;
+    const stepped = feat === 'values' || feat === 'compare';
+    $('tStepBox').hidden = !stepped; $('tRange').classList.toggle('two', !stepped);
+    $('tGBox').hidden = feat !== 'compare';
+    $('tFormH').firstChild.textContent = feat === 'compare' ? 'Your two formulas' : 'Your formula';
+    if (feat !== 'compare' && tInput === $('tG')) tInput = $('tF');
+    let src;
+    try { src = formulaToSrc($('tF').value); } catch (er) { return say(er.tmsg || 'That formula could not be read.', true); }
+    const a = +s, b = +e;
+    if ([s, e].some(v => v.trim() === '') || ![a, b].every(Number.isFinite)) return say('Fill in where X starts and ends with numbers.', true);
+    if (b < a || (b === a && feat !== 'values')) return say('“To” must be bigger than “From”.', true);
+    const f = makeF(src);
+    try { withX(() => ({ values: renderValues, graph: renderGraph, zeros: renderZeros, compare: renderCompare })[feat](out, f, a, b, say)); }
+    catch (er) { if (er && er.tmsg) say(er.tmsg, true); else throw er; }
+  }
+
+  // Values (and Compare, which passes a second formula g): one row per X, from a to b in steps
+  function renderValues(out, f, a, b, say, g) {
+    const st = $('tStep').value, step = +st;
+    if (st.trim() === '' || !Number.isFinite(step)) return say('Fill in the step with a number, for example 1 or 0.5.', true);
+    if (step <= 0) return say('The step must be more than 0, for example 1 or 0.5.', true);
+    const count = Math.floor((b - a) / step + 1e-9) + 1;
+    if (count > 45) return say(`That would be ${count} rows. Use a bigger step to keep it to 45 or fewer.`, true);
+    const cell = v => v === null ? '<td class="na">no answer</td>' : `<td>${esc(fmt(v, false))}</td>`;
+    const rows = []; let bad = 0, same = 0;
+    for (let i = 0; i < count; i++) {
+      const x = parseFloat((a + i * step).toPrecision(12)), y = f(x), y2 = g ? g(x) : undefined;
+      if (y === null || y2 === null) bad++;
+      // the same answer, allowing for the last-digit rounding every calculator has
+      const eq = g && y !== null && y2 !== null && Math.abs(y - y2) <= 1e-9 * Math.max(1, Math.abs(y), Math.abs(y2));
+      if (eq) same++;
+      rows.push(`<tr${eq ? ' class="same"' : ''}><td>${esc(fmt(x, false))}</td>${cell(y)}${g ? cell(y2) : ''}</tr>`);
+    }
+    out.innerHTML = `<div class="tblwrap"><table class="ft"><thead><tr><th>X</th><th>f(X)</th>${g ? '<th>g(X)</th>' : ''}</tr></thead><tbody>${rows.join('')}</tbody></table></div>` +
+      (g ? `<p class="tnote">${same ? `Highlighted ${same === 1 ? 'row' : 'rows'}: both formulas give the same answer.` : 'The two formulas never give the same answer at these X values.'}</p>` : '') +
+      (bad ? `<p class="tnote">“no answer” means the formula has no value there, like √ of a negative number or dividing by 0.</p>` : '');
+  }
+  function renderCompare(out, f, a, b, say) {
+    let src;
+    try { src = formulaToSrc($('tG').value, false); } catch (er) { return say('Second formula, g(X): ' + (er.tmsg || 'it could not be read.'), true); }
+    // with two formulas, a problem found while working them out says which one it is in
+    const named = (fn, name) => x => { try { return fn(x); } catch (er) { if (er && er.tmsg) tErr(`${name}: ${er.tmsg}`); throw er; } };
+    return renderValues(out, named(f, 'First formula, f(X)'), a, b, say, named(makeF(src), 'Second formula, g(X)'));
+  }
+
+  function renderGraph(out, f, a, b, say) {
+    const N = 240, pts = [];
+    for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; pts.push([x, f(x)]); }
+    const ys = pts.map(p => p[1]).filter(v => v !== null).sort((p, q) => p - q);
+    if (!ys.length) return say(`The formula has no answers between ${fmt(a, false)} and ${fmt(b, false)}. Try other X values.`, true);
+    let lo = ys[0], hi = ys[ys.length - 1];
+    // a spike (like 1/X near 0) would squash everything else flat, so then the extreme 5% at each end is left out
+    const tlo = ys[Math.floor(ys.length * .05)], thi = ys[Math.ceil(ys.length * .95) - 1];
+    if (hi - lo > 6 * Math.max(thi - tlo, 1e-9)) { lo = tlo; hi = thi; }
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    const padY = (hi - lo) * .08; lo -= padY; hi += padY;
+    const W = Math.max(240, out.clientWidth || 300), H = 230, ml = 6, mr = 6, mt = 8, mb = 22;
+    const X = x => ml + (x - a) / (b - a) * (W - ml - mr), Y = y => mt + (hi - y) / (hi - lo) * (H - mt - mb);
+    let d = '', prev = null;
+    for (const [x, y] of pts) {
+      const inView = y !== null && y >= lo - (hi - lo) && y <= hi + (hi - lo);
+      if (!inView) { prev = null; continue; }
+      const px = X(x), py = Math.max(-H, Math.min(2 * H, Y(y)));
+      if (prev && Math.abs(py - prev) > H * .9) prev = null;   // a jump across a gap (like 1/X at 0) is not joined up
+      d += (prev === null ? 'M' : 'L') + px.toFixed(1) + ' ' + py.toFixed(1);
+      prev = py;
+    }
+    let grid = '';
+    if (lo < 0 && hi > 0) grid += `<line class="g-axis" x1="${ml}" x2="${W - mr}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+    if (a < 0 && b > 0) grid += `<line class="g-axis" x1="${X(0)}" x2="${X(0)}" y1="${mt}" y2="${H - mb}"/>`;
+    grid += `<line class="g-grid" x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}"/>`;
+    const ticks = `<text class="g-tick" x="${ml}" y="${H - 6}">${short(a)}</text><text class="g-tick" x="${W - mr}" y="${H - 6}" text-anchor="end">${short(b)}</text>` +
+      (a < 0 && b > 0 ? `<text class="g-tick" x="${X(0)}" y="${H - 6}" text-anchor="middle">0</text>` : '') +
+      `<text class="g-tick" x="${ml + 3}" y="${mt + 10}">${short(hi)}</text><text class="g-tick" x="${ml + 3}" y="${H - mb - 4}">${short(lo)}</text>`;
+    out.innerHTML = `<div class="gread" id="gRead">Touch the graph to read a point.</div>
+      <div class="gwrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Graph of f(X) from X = ${fmt(a, false)} to ${fmt(b, false)}">${grid}${ticks}<path class="g-line" d="${d}"/>
+      <line class="g-guide" id="gGuide" y1="${mt}" y2="${H - mb}" visibility="hidden"/><circle class="g-dot" id="gDot" r="5.5" visibility="hidden"/></svg></div>`;
+    const wrap = out.querySelector('.gwrap');
+    const read = ev => {
+      const r = wrap.getBoundingClientRect();
+      const px = Math.max(ml, Math.min(W - mr, (ev.clientX - r.left) / r.width * W));
+      const x = parseFloat((a + (px - ml) / (W - ml - mr) * (b - a)).toPrecision(6));
+      let y; try { y = withX(() => f(x)); } catch (er) { return; }
+      const guide = $('gGuide'), dot = $('gDot');
+      guide.setAttribute('x1', X(x)); guide.setAttribute('x2', X(x)); guide.setAttribute('visibility', 'visible');
+      if (y !== null && y >= lo && y <= hi) { dot.setAttribute('cx', X(x)); dot.setAttribute('cy', Y(y)); dot.setAttribute('visibility', 'visible'); }
+      else dot.setAttribute('visibility', 'hidden');
+      $('gRead').innerHTML = `X = <b>${esc(fmt(x, false))}</b> &nbsp;→&nbsp; f(X) = <b>${y === null ? 'no answer' : esc(fmt(y, false))}</b>`;
+    };
+    wrap.addEventListener('pointerdown', ev => { wrap.setPointerCapture(ev.pointerId); read(ev); });
+    wrap.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse' || wrap.hasPointerCapture(ev.pointerId)) read(ev); });
+  }
+
+  // X values where f(X) = 0 between a and b: sign changes are narrowed down by halving; touching zeros
+  // (like X² at 0, no sign change) are found as dips of |f| that reach 0.
+  function findZeros(f, a, b) {
+    const N = 600, xs = [], ys = [], roots = [];
+    for (let i = 0; i <= N; i++) { const x = a + (b - a) * i / N; xs.push(x); ys.push(f(x)); }
+    const add = x => {
+      if (Math.abs(x) < (b - a) * 1e-9) x = 0;
+      x = parseFloat(x.toPrecision(10));
+      if (!roots.some(r => Math.abs(r - x) < (b - a) * 1e-6)) roots.push(x);
+    };
+    for (let i = 0; i <= N; i++) if (ys[i] === 0) add(xs[i]);
+    for (let i = 0; i < N; i++) {
+      let l = xs[i], r = xs[i + 1], fl = ys[i]; const fr0 = ys[i + 1];
+      if (fl === null || fr0 === null || fl === 0 || fr0 === 0 || (fl < 0) === (fr0 < 0)) continue;
+      let ok = true;
+      for (let k = 0; k < 80; k++) {
+        const m = (l + r) / 2, fm = f(m);
+        if (fm === null) { ok = false; break; }
+        if ((fm < 0) === (fl < 0)) { l = m; fl = fm; } else r = m;
+      }
+      const m = (l + r) / 2, fm = f(m);
+      // across a gap like 1/X at 0 the sign flips too, but f is huge there instead of 0
+      if (ok && fm !== null && Math.abs(fm) <= 1e-6 * Math.max(1, Math.abs(ys[i]), Math.abs(fr0))) add(m);
+    }
+    for (let i = 1; i < N; i++) {
+      const p = ys[i - 1], c = ys[i], n = ys[i + 1];
+      if (p === null || c === null || n === null || c === 0) continue;
+      if (!(Math.abs(c) <= Math.abs(p) && Math.abs(c) <= Math.abs(n)) || (p < 0) !== (c < 0) || (n < 0) !== (c < 0)) continue;
+      let l = xs[i - 1], r = xs[i + 1];
+      for (let k = 0; k < 120; k++) {
+        const m1 = l + (r - l) / 3, m2 = r - (r - l) / 3, f1 = f(m1), f2 = f(m2);
+        if (f1 === null || f2 === null) break;
+        if (Math.abs(f1) < Math.abs(f2)) r = m2; else l = m1;
+      }
+      const m = (l + r) / 2, fm = f(m);
+      if (fm !== null && Math.abs(fm) < 1e-9) add(m);
+    }
+    return roots.sort((p, q) => p - q);
+  }
+  function renderZeros(out, f, a, b, say) {
+    const roots = findZeros(f, a, b), A = fmt(a, false), B = fmt(b, false);
+    if (!roots.length) return say(`The answer never reaches 0 between ${A} and ${B}. Try a wider range, for example From −10 To 10.`);
+    const shown = roots.slice(0, 20);
+    out.innerHTML = `<ul class="zlist">${shown.map(r => `<li>X = ${esc(fmt(r, false))}<span>f(X) = 0</span></li>`).join('')}</ul>` +
+      `<p class="tnote">${roots.length > 20 ? `Showing the first 20 of ${roots.length}. ` : ''}Searched X from ${esc(A)} to ${esc(B)}. Widen the range to search further.</p>`;
+  }
+
+  function insertIntoFormula(txt) {
+    const inp = tInput, a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
+    inp.value = inp.value.slice(0, a) + txt + inp.value.slice(b);
+    inp.focus({ preventScroll: true }); inp.setSelectionRange(a + txt.length, a + txt.length);
+    renderTable();
+  }
+
+  // ---- "How it works": a short silent animation for the feature that is open, looping ----
+  let demoTimers = [];
+  const later = (ms, fn) => demoTimers.push(setTimeout(fn, ms));
+  function stopDemo() { demoTimers.forEach(clearTimeout); demoTimers = []; }
+  function typeText(el, text, t0) {   // types text one character at a time, returns when it ends
+    [...text].forEach((ch, i) => later(t0 + i * 230, () => { el.textContent += ch; }));
+    return t0 + text.length * 230;
+  }
+  const demoPills = (from, to, step) => `<div class="d-pills"><span>From<b>${from}</b></span><span>To<b>${to}</b></span>${step ? `<span>Step<b>${step}</b></span>` : ''}</div>`;
+  const demoField = '<div class="d-field"><span class="p">f(X) =</span><span class="t"></span><span class="d-caret"></span></div>';
+  // X²−4 drawn from X = −3 to 3 in a 300 × 124 box
+  const dX = x => 14 + (x + 3) / 6 * 272, dY = y => 8 + (5.6 - y) / 10.4 * 108;
+  const demoCurve = () => { let d = ''; for (let i = 0; i <= 60; i++) { const x = -3 + i / 10; d += (i ? 'L' : 'M') + dX(x).toFixed(1) + ' ' + dY(x * x - 4).toFixed(1); } return d; };
+  const demoGraph = extra2 => `<div class="d-graph"><svg viewBox="0 0 300 124"><line class="g-axis" x1="8" x2="292" y1="${dY(0)}" y2="${dY(0)}"/><line class="g-axis" x1="${dX(0)}" x2="${dX(0)}" y1="4" y2="120"/><path class="g-line" d="${demoCurve()}" style="stroke-dasharray:600;stroke-dashoffset:600"/>${extra2 || ''}</svg></div>`;
+  function pointIn(stage, svgX, svgY) {   // a point of the demo graph, in the demo box's own coordinates
+    const sv = stage.querySelector('svg').getBoundingClientRect(), st = stage.getBoundingClientRect();
+    return { left: sv.left - st.left + svgX / 300 * sv.width, top: sv.top - st.top + svgY / 124 * sv.height };
+  }
+  const DEMOS = {
+    values: {
+      title: 'How Values works',
+      steps: ['Type a formula with X', 'Choose where X starts and ends', 'Read the answer for each X'],
+      run(stage, step) {
+        const rows = [['−2', '−3'], ['−1', '−1'], ['0', '1'], ['1', '3'], ['2', '5']];
+        stage.innerHTML = demoField + demoPills('−2', '2', '1') + `<div class="d-rows">${rows.map(([x, y]) => `<div><span>X = ${x}</span><b>${y}</b></div>`).join('')}</div>`;
+        step(0); let t = typeText(stage.querySelector('.t'), '2X+1', 400);
+        t += 500; later(t, () => step(1));
+        stage.querySelectorAll('.d-pills span').forEach((p, i) => later(t + 150 + i * 350, () => p.classList.add('in')));
+        t += 1500; later(t, () => step(2));
+        stage.querySelectorAll('.d-rows div').forEach((r, i) => later(t + 200 + i * 380, () => r.classList.add('in')));
+        return t + 200 + rows.length * 380;
+      },
+    },
+    graph: {
+      title: 'How Graph works',
+      steps: ['Type a formula with X', 'Choose where X starts and ends', 'Touch the graph to read any point'],
+      run(stage, step) {
+        stage.innerHTML = demoField + demoPills('−3', '3') + demoGraph() + '<span class="d-finger"></span><span class="d-tag"></span>';
+        step(0); let t = typeText(stage.querySelector('.t'), 'X²−4', 400);
+        t += 500; later(t, () => step(1));
+        stage.querySelectorAll('.d-pills span').forEach((p, i) => later(t + 150 + i * 350, () => p.classList.add('in')));
+        later(t + 900, () => { stage.querySelector('.g-line').style.strokeDashoffset = '0'; });
+        t += 2600; later(t, () => step(2));
+        const finger = stage.querySelector('.d-finger'), tag = stage.querySelector('.d-tag');
+        [[1, -3], [-2, 0], [2.5, 2.25]].forEach(([x, y], i) => {
+          later(t + 300 + i * 1300, () => {
+            const p = pointIn(stage, dX(x), dY(y));
+            finger.style.left = p.left + 'px'; finger.style.top = p.top + 'px'; finger.classList.add('in');
+            tag.classList.remove('in');
+            later(550, () => { tag.textContent = `X = ${String(x).replace('-', '−')}  →  ${String(y).replace('-', '−')}`; tag.style.left = p.left + 'px'; tag.style.top = p.top + 'px'; tag.classList.add('in'); });
+          });
+        });
+        return t + 300 + 3 * 1300;
+      },
+    },
+    zeros: {
+      title: 'How Zeros works',
+      steps: ['Type a formula with X', 'Choose where to search', 'The dots are where the answer is 0'],
+      run(stage, step) {
+        stage.innerHTML = demoField + demoPills('−3', '3') + demoGraph(`<circle class="d-zero" cx="${dX(-2)}" cy="${dY(0)}" r="6"/><circle class="d-zero" cx="${dX(2)}" cy="${dY(0)}" r="6"/>`) + '<span class="d-tag" id="dz1"></span><span class="d-tag" id="dz2"></span>';
+        step(0); let t = typeText(stage.querySelector('.t'), 'X²−4', 400);
+        t += 500; later(t, () => step(1));
+        stage.querySelectorAll('.d-pills span').forEach((p, i) => later(t + 150 + i * 350, () => p.classList.add('in')));
+        later(t + 900, () => { stage.querySelector('.g-line').style.strokeDashoffset = '0'; });
+        t += 2600; later(t, () => step(2));
+        stage.querySelectorAll('.d-zero').forEach((z, i) => later(t + 300 + i * 600, () => {
+          z.classList.add('in');
+          const tag = stage.querySelector(i ? '#dz2' : '#dz1'), p = pointIn(stage, dX(i ? 2 : -2), dY(0));
+          tag.textContent = i ? 'X = 2' : 'X = −2'; tag.style.left = p.left + 'px'; tag.style.top = (p.top - 6) + 'px'; tag.classList.add('in');
+        }));
+        return t + 300 + 2 * 600 + 1200;
+      },
+    },
+    compare: {
+      title: 'How Compare works',
+      steps: ['Type the first formula, f(X)', 'Type the second formula, g(X)', 'Compare the answers. Matching rows light up'],
+      run(stage, step) {
+        // X+2 and X² meet at X = −1 and X = 2
+        const rows = [['−1', '1', '1', 1], ['0', '2', '0'], ['1', '3', '1'], ['2', '4', '4', 1]];
+        stage.innerHTML = demoField + demoField.replace('f(X) =', 'g(X) =').replace('<span class="d-caret"></span>', '') +
+          `<div class="d-rows" style="margin-top:8px">${rows.map(([x, f1, g1, same]) => `<div${same ? ' data-same' : ''}><span>X = ${x}</span><b>${f1}</b><b>${g1}</b></div>`).join('')}</div>`;
+        const [ff, gf] = stage.querySelectorAll('.t');
+        step(0); let t = typeText(ff, 'X+2', 400);
+        t += 500; later(t, () => step(1));
+        t = typeText(gf, 'X²', t + 300);
+        t += 600; later(t, () => step(2));
+        stage.querySelectorAll('.d-rows div').forEach((r, i) => later(t + 200 + i * 450, () => r.classList.add('in')));
+        later(t + 200 + rows.length * 450 + 200, () => stage.querySelectorAll('.d-rows [data-same]').forEach(r => r.classList.add('same')));
+        return t + 200 + rows.length * 450 + 1200;
+      },
+    },
+  };
+  function playDemo() {
+    stopDemo();
+    const d = DEMOS[feat], stage = $('tDemo');
+    $('tHelpH').textContent = d.title;
+    $('tDemoSteps').innerHTML = d.steps.map(s => `<li>${s}</li>`).join('');
+    const step = i => { $('tDemoCap').textContent = d.steps[i]; [...$('tDemoSteps').children].forEach((li, j) => li.classList.toggle('now', j === i)); };
+    const end = d.run(stage, step);
+    later(end + 1800, playDemo);   // pause on the finished picture, then start again
+  }
+  function hideHelp() { stopDemo(); $('tHelp').hidden = true; }
+  function openHelp() { $('tHelp').hidden = false; playDemo(); $('tHelpOk').focus({ preventScroll: true }); }
+  function closeHelp() { hideHelp(); $('tHow').focus({ preventScroll: true }); }
+
+  // =============== keyboard ===============
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('textarea, input, select')) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // on a page the keypad is hidden, so keys must not type into it; Esc goes back to the calculator
+    if (e.key === 'Escape' && !$('tHelp').hidden) { e.preventDefault(); closeHelp(); return; }   // Esc closes "How it works" first
+    if (page !== 'calc') { if (e.key === 'Escape') { e.preventDefault(); showPage('calc'); } return; }
+    let k = e.key;
+    // Enter on a focused button outside the keypad (Build table, history, menu items) presses that button, not =
+    if (k === 'Enter' && e.target.closest('button') && !e.target.closest('.pad')) return;
+    if (k === '=') k = 'Enter';
+    if (k === 'Delete') k = 'Escape';
+    if (e.code === 'NumpadDecimal') k = '.';   // Turkish/European keyboards send "," from the number pad's decimal key
+    if (k === 'x' || k === 'X') k = '*';       // many people type x for times
+    const nav = { ArrowLeft: left, ArrowRight: right, ArrowUp: vertUp, ArrowDown: vertDown };
+    const extraKeys = {
+      '^': () => insTpl('pow', [[]], 0, 'post'),
+      '!': () => insTok('!', '!', 'post'),
+      '%': () => insTok('%', '%', 'post'),
+      ',': () => insTok(',', ','),
+    };
+    if (nav[k]) { e.preventDefault(); pressNav(nav[k]); return; }
+    if (keyMap[k]) {
+      e.preventDefault();
+      const def = keyMap[k];
+      def.btn.classList.add('press'); setTimeout(() => def.btn.classList.remove('press'), 90);
+      shift = alpha = false; press(def);
+    } else if (extraKeys[k] && !off && !menu) { e.preventDefault(); shift = alpha = sto = rcl = false; extraKeys[k](); hyp = insArg = false; render(); }
+  });
+
+  // =============== boot ===============
+  load();
+  const padF = $('padF');
+  buildDpad(padF);
+  build(padF, FN);
+  build($('padM'), MAIN);
+  $('xs').value = EX_X; $('ys').value = EX_Y;
+  $('xs').addEventListener('input', renderStats);
+  $('ys').addEventListener('input', renderStats);
+  // Table page: restore the last formula and range, then update the table live as anything changes
+  try { const t = JSON.parse(localStorage.getItem('hesap-table') || 'null'); if (t) { $('tF').value = t.f; $('tStart').value = t.s; $('tEnd').value = t.e; $('tStep').value = t.st; if (typeof t.g === 'string') $('tG').value = t.g; if (FEAT[t.feat]) feat = t.feat; } } catch (er) {}
+  document.querySelectorAll('.feat [data-feat]').forEach(b => b.addEventListener('click', () => { feat = b.dataset.feat; renderTable(); }));
+  ['tF', 'tG', 'tStart', 'tEnd', 'tStep'].forEach(id => $(id).addEventListener('input', renderTable));
+  ['tF', 'tG'].forEach(id => ['focus', 'input'].forEach(ev => $(id).addEventListener(ev, e => { if (tInput !== e.target) { tInput = e.target; renderTable(); } })));
+  document.querySelectorAll('.tkeys [data-ins]').forEach(b => b.addEventListener('click', () => insertIntoFormula(b.dataset.ins)));
+  document.querySelectorAll('.tex button').forEach(b => b.addEventListener('click', () => { tInput.value = b.textContent; renderTable(); }));
+  $('tHow').addEventListener('click', openHelp);
+  $('tHelpX').addEventListener('click', closeHelp);
+  $('tHelpOk').addEventListener('click', closeHelp);
+  $('tHelp').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });   // a tap on the dimmed area closes it
+  const exEl = $('expr');
+  exEl.addEventListener('click', tapExpr);
+  exEl.addEventListener('pointerdown', e => { touchDown(e); if (touch) try { exEl.setPointerCapture(e.pointerId); } catch (er) {} });
+  exEl.addEventListener('pointermove', touchMove);
+  exEl.addEventListener('pointerup', endTouch);
+  exEl.addEventListener('pointercancel', endTouch);
+  exEl.addEventListener('touchmove', e => { if (touch && (touch.holding || touch.swiping)) e.preventDefault(); }, { passive: false });   // no page scroll while sliding the cursor
+  exEl.addEventListener('contextmenu', e => e.preventDefault());   // a long press must not open the phone's copy/select menu
+  $('clrHist').addEventListener('click', e => {
+    if (clearTimer) { history = []; histIdx = -1; save(); renderHistory(); return; }
+    e.currentTarget.textContent = 'Tap again to clear all'; e.currentTarget.classList.add('danger');
+    clearTimer = setTimeout(resetClear, 4000);
+  });
+  // app buttons under the keypad
+  for (const [k, id] of Object.entries(BTNS)) $(id).addEventListener('click', () => showPage(k));
+  $('pgBack').addEventListener('click', () => showPage('calc'));
+  // Settings page: the same angle and display settings as SHIFT MODE (SETUP)
+  const applyFmt = () => { save(); render(); renderHistory(); renderVars(); renderStats(); renderSettings(); };
+  $('setAngle').addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    angle = b.dataset.v; save(); render(); renderSettings();
+  });
+  $('setFmt').addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    const v = b.dataset.v;
+    if (v === 'norm1' || v === 'norm2') disp = { t: 'norm', n: +v.slice(4) };
+    else if (disp.t !== v) disp = { t: v, n: v === 'fix' ? 2 : 10 };
+    applyFmt();
+  });
+  $('setDig').addEventListener('change', e => { disp = { t: disp.t, n: +e.target.value }; applyFmt(); });
+  $('setStats').addEventListener('click', () => showPage('stat'));
+  // back to Degrees and Norm 2 (the same as SHIFT CLR 1:Setup); memory and history are not touched
+  let defTimer = null;
+  $('setDefault').addEventListener('click', () => {
+    const already = angle === 'DEG' && disp.t === 'norm' && disp.n === 2;
+    angle = 'DEG'; disp = { t: 'norm', n: 2 }; applyFmt();
+    $('setDefT').textContent = already ? 'Already on default' : 'Done: back to default'; $('setDefault').classList.add('ok');
+    clearTimeout(defTimer);
+    defTimer = setTimeout(() => { $('setDefT').textContent = 'Reset settings to default'; $('setDefault').classList.remove('ok'); }, 2500);
+  });
+  // "Clear memory and history" asks once: the first tap arms it, a second tap within 4 seconds clears
+  let resetTimer = null;
+  const resetRow = (t, s, armed) => { $('setResetT').textContent = t; $('setResetS').textContent = s; $('setReset').classList.toggle('danger', armed); };
+  $('setReset').addEventListener('click', () => {
+    clearTimeout(resetTimer);
+    if (!$('setReset').classList.contains('danger')) {
+      resetRow('Tap again to clear everything', 'Saved memory letters and all history', true);
+      resetTimer = setTimeout(() => resetRow('Clear memory and history', 'Deletes saved numbers and your History. Asks first.', false), 4000);
+      return;
+    }
+    Object.keys(vars).forEach(k => vars[k] = 0); ans = preAns = 0; history = []; histIdx = -1;
+    save(); renderVars(); renderHistory(); render();
+    resetRow('Cleared', 'Memory and history are empty now', false);
+    resetTimer = setTimeout(() => resetRow('Clear memory and history', 'Deletes saved numbers and your History. Asks first.', false), 2500);
+  });
+  showPage('calc');
+  // keep an open page matching the keypad when the window is resized or the fonts finish loading
+  const resizePage = () => { if (PAGES[page]) sizePages(); if (page === 'table' && feat === 'graph') renderTable(); };   // the graph is drawn to the card's width
+  addEventListener('resize', resizePage);
+  if (document.fonts) document.fonts.ready.then(resizePage);
+  renderHistory(); renderVars(); renderStats();
+  // open with an example (a fraction and a power box) typed in, ready for =. It is not calculated,
+  // so it does not overwrite the stored Ans, and typing a new calculation replaces it.
+  if (!history.length) {
+    setRoot([
+      { k: 'frac', s: [[tok('3', '3')], [tok('4', '4')]] }, tok('+', '+'),
+      tok('2', '2'), { k: 'pow', s: [[tok('5', '5')]] },
+    ]);
+    demo = true;
+  }
+  render();
+})();
+// installable app + offline copy; only works on the website (not when the file is opened directly)
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+
+</body></html>
